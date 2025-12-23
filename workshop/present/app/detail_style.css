@@ -5,13 +5,15 @@ html, body {
   height: 100%;
   width: 100%;
   font-family: sans-serif;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-container {
   display: flex;
   flex-direction: column;
-  height: 100% ;
+  flex-grow: 1;
+  min-height: 0;
   padding: 20px; 
   box-sizing: border-box;
   background-color: white;
@@ -79,11 +81,21 @@ html, body {
 
 /* ボタンを囲むラッパー */
 .button-wrapper {
-  margin-top: 15px;
+  margin-bottom: 20px; /* 下の content-container との隙間 */
   flex-shrink: 0;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 10px;
+  
+  background-color: #f5f5f5;
+  border-top: 0.5px solid #ddd;
+  border-bottom: 0.5px solid #ddd;
+  
+  margin-left: -20px;
+  margin-right: -20px;
+  
+  padding: 5px 20px; 
 }
 
 /* ボタン共通のスタイル */
@@ -186,7 +198,7 @@ html, body {
 
 /* 解説表示時に高さを広げるスタイルを追加 */
 .interaction-panel.expanded {
-  height: 270px; /* ボタンがあった分だけ高さを広げる */
+  flex-direction: column;
 }
 
 /* 解説パネルのスタイル */
@@ -289,15 +301,6 @@ html, body {
   white-space: nowrap;
 }
 
-/* 解説パネルのスタイル */
-.explanation-panel {
-  height: auto;
-  width: 100%;
-  padding: 10px 20px;
-  text-align: left;
-  overflow-y: auto;
-}
-
 .explanation-panel h4 {
   margin-top: 15px;
   margin-bottom: 5px;
@@ -375,28 +378,6 @@ html, body {
 }
 .btn-primary:hover {
   background-color: #0056b3;
-}
-
-/* --- アート作成案内のスタイル --- */
-.creation-prompt {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  height: 100%;
-  gap: 15px;
-}
-
-.creation-prompt p {
-  margin: 0;
-  font-size: 0.9em;
-  line-height: 1.6;
-}
-
-.creation-buttons {
-  display: flex;
-  gap: 10px;
 }
 
 /* グレーのボタンスタイル */
@@ -491,15 +472,6 @@ html, body {
   position: relative; /* ボタン配置の基準 */
 }
 
-/* 縦型リストのコンテナ */
-.nearby-works-list-vertical {
-  display: flex;
-  flex-direction: column; /* 縦に並べる */
-  gap: 15px; /* 作品間の隙間 */
-  height: calc(100% - 70px); /* ボタンの高さを引いた分の高さ */
-  overflow-y: auto; /* はみ出たらスクロール */
-}
-
 /* 縦型リストの各作品 */
 .nearby-work-item-vertical {
   display: flex; /* 画像と情報を横に並べる */
@@ -585,15 +557,69 @@ html, body {
   line-height: 1.6;
   color: #555;
 }
-/* Step 3: 行動キーワード */
-.action-keywords-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  align-items: center;
-  padding: 20px 0; /* 上下に余白 */
-  width: 100%;
+
+/* --- Step 1 右パネルのタスク指示 --- */
+.guide-task-prompt {
+  margin-top: 15px; /* 上の説明文との隙間 */
+  padding: 10px;
+  background-color: #fffde7; /* 薄い黄色 */
+  border: 1px solid #fbc02d; /* 黄色い枠線 */
+  border-radius: 8px;
+}
+
+.guide-task-prompt p {
+  margin: 0;
+  font-weight: bold; /* ★太字にする */
+  color: #333; /* 少し濃い色 */
+  line-height: 1.6;
+}
+
+/* 凡例の高さを固定（コロコロ変わらないように） */
+.fixed-height-legend {
+  /* 凡例の最低の高さを確保 */
+  min-height: 120px; 
+  /* 凡例が長くなりすぎたら、凡例内でスクロール */
+  max-height: 200px; 
+  overflow-y: auto;
+  /* 凡例の横幅も固定 */
+  width: 200px; 
+}
+
+/* --- Step 2, 3, 4 の解説パネル（拡大）スタイル --- */
+.interaction-panel.expanded-explanation {
+  flex-direction: column;
+  border: 2px solid #007bff; /* ★目立つ青い枠線 */
+  background-color: #fafafa; /* ★背景色を少し変える */
+  justify-content: flex-start; /* 上揃え */
+  height: auto; /* 内容に合わせて高さ自動調整 */
+}
+
+/* ★ピカピカさせるアニメーション（クラスを分離） */
+.pika-pika {
+  animation: pulse-blue 2s infinite;
+}
+
+/* Step 2以降の解説パネルのヘッダー */
+.expanded-explanation .panel-header {
+  font-size: 1.2em;
+  color: #007bff;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 5px;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+/* ★ピカピカ（脈動）させるためのキーフレーム */
+@keyframes pulse-blue {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+  }
 }
 
 /* Step 3: .emotion-button を流用しつつ、選択時のスタイルを追加 */
@@ -602,6 +628,55 @@ html, body {
   color: white;
   border-color: #007bff;
   box-shadow: 0 0 5px rgba(0,123,255,0.5);
+}
+
+/* Step 3: 行動キーワード (3カラム形式) */
+.action-columns-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px; /* カラム間の隙間 */
+  width: 100%;
+}
+
+/* 3カラムの各列 */
+.action-column {
+  flex: 1; /* 3等分 */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fdfdfd;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* カラムのタイトル */
+.action-category-title {
+  font-size: 1em;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+/* カラム内のボタンコンテナ */
+.action-column-buttons {
+  display: flex;
+  flex-direction: column; /* ボタンを縦に並べる */
+  gap: 8px; /* ボタン間の隙間 */
+}
+
+/* ボタン自体のサイズ */
+.action-keyword {
+  padding: 8px 12px;
+  font-size: 0.9em;
+  width: 100%; /* 親の幅に合わせる */
+  box-sizing: border-box;
+}
+
+/* Step 3 用の高さ */
+.interaction-panel.step3-height {
+  height: auto; /* ★ 3カラムに合わせて高さを自動に */
 }
 
 /* Step 4: 関連する危険の要約 */
@@ -614,23 +689,6 @@ html, body {
   border-radius: 4px;
   margin-bottom: 15px;
   border-left: 4px solid #6c757d; /* グレーの線でアクセント */
-}
-
-/* --- Step 5: 感想リアクションボタン --- */
-.reaction-prompt {
-  font-size: 0.9em;
-  font-weight: bold;
-  text-align: center;
-  color: #333;
-  margin-top: 15px;
-  margin-bottom: 10px;
-}
-
-.reaction-buttons-container {
-  display: flex;
-  flex-wrap: wrap; /* 画面が狭くても折り返す */
-  gap: 10px;
-  justify-content: center; /* 中央揃え */
 }
 
 /* Step 5: 「解説に戻る」ボタンを押した時など、
@@ -672,18 +730,6 @@ html, body {
   gap: 15px;
 }
 
-/* ボタンを下に配置 */
-.list-wrapper-left .panel-footer-buttons {
-  position: static;
-  flex-shrink: 0; /* 縮まない */
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 15px;
-  border-top: 1px solid #eee; /* リストとの境界線 */
-  background-color: #f9f9f9;
-}
-
 /* 周辺作品がなかった場合のメッセージ */
 .list-wrapper-left .no-nearby-works {
   font-size: 1em;
@@ -696,54 +742,41 @@ html, body {
   justify-content: center;
 }
 
-/* --- Step 6: 案内パネル（左カラム） --- */
-/* .creation-prompt を左カラムに表示するときの調整 */
-.creation-prompt {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  height: 100%;
-  gap: 15px;
-  padding: 20px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
+/* Step 5: メッセージ強調スタイル */
+.step5-message-highlight {
+  font-size: 1.05em !important; /* .explanation-panel p より優先 */
+  font-weight: bold;
+  background-color: #fffde7;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #fbc02d;
+  line-height: 1.6;
 }
 
-/* --- Step 6: 作品数カウントのスタイル --- */
-.artwork-count {
-  font-size: 1.1em;
-  font-weight: bold;
-  color: #333;
-  background-color: #fffde7;
-  border: 1px solid #fbc02d;
-  padding: 12px;
+/* Step 5: 危険→行動の関連ボックス */
+.step5-flow-box {
+  border: 1px solid #ddd;
   border-radius: 8px;
-  margin-bottom: 15px;
+  background-color: #fdfdfd;
+}
+.step5-flow-danger, .step5-flow-action {
+  padding: 10px 15px;
+  margin: 0 !important; /* .explanation-panel p の margin を上書き */
+}
+.step5-flow-arrow {
   text-align: center;
+  font-size: 1.5em;
+  color: #007bff;
+  border-top: 1px dashed #ccc;
+  border-bottom: 1px dashed #ccc;
+  padding: 5px 0;
+  line-height: 1;
 }
 
 .artwork-count strong {
   font-size: 1.4em;
   color: #e74c3c; /* 目立つ赤色 */
   margin: 0 5px;
-}
-
-/* --- Step 6: 案内ボタンを縦並びにするスタイル --- */
-.creation-buttons-vertical {
-  display: flex;
-  flex-direction: column; /* 縦並び */
-  gap: 12px;
-  width: 90%; /* 幅を少し持たせる */
-  margin: 0 auto; /* 中央揃え */
-}
-
-/* 縦並びのボタンの幅を100%にする */
-.creation-buttons-vertical .nav-button {
-  width: 100%;
-  box-sizing: border-box; /* paddingを含めて100% */
 }
 
 /* --- ボタンの無効（disabled）状態のスタイル --- */
@@ -758,4 +791,152 @@ html, body {
 .nav-button.btn-primary:disabled {
   background-color: #cccccc;
   color: #888888;
+}
+
+/* ★★★ ここからCSSの一番最後に追加 ★★★ */
+
+/* --- Step 6: 周辺の作品グリッド --- */
+.nearby-works-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2列グリッド */
+  gap: 20px; /* 作品間の隙間 */
+  padding: 20px; /* 内側に余白 */
+  box-sizing: border-box;
+  overflow-y: auto; /* 4件以上あった場合にスクロール */
+  height: 100%; /* list-wrapper-left の高さに合わせる */
+}
+
+/* グリッドの各アイテム */
+.nearby-work-grid-item {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  overflow: hidden; /* 画像のはみ出し防止 */
+}
+.nearby-work-grid-item:hover {
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* グリッドの画像 */
+.nearby-work-grid-item img {
+  width: 100%;
+  height: 150px; /* 高さを指定 (縦横比を揃える) */
+  object-fit: contain; /* 画像全体を表示 */
+  background-color: #f0f0f0;
+}
+
+/* グリッドの作者情報・鑑賞済みラベル */
+.nearby-work-grid-item .nearby-work-info {
+  padding: 12px;
+  text-align: center;
+}
+
+.nearby-work-grid-item .nearby-author {
+  margin: 0;
+  font-weight: bold;
+}
+
+/* 鑑賞済み作品のスタイル上書き */
+.nearby-work-grid-item.viewed img {
+  border-bottom: 4px solid #e74c3c;
+}
+
+/* 鑑賞済みラベル (グリッド用) */
+.nearby-work-grid-item .viewed-label {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 0.7em;
+  color: white;
+  background-color: #e74c3c;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ★★★ ここからCSSの一番最後に追加 ★★★ */
+
+/* Step 6: グリッドで選択中のアイテム */
+.nearby-work-grid-item.selected {
+  border: 3px solid #007bff;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+  background-color: #f9f9f9;
+}
+
+/* Step 6: グリッドの「この作品を見る」リンク */
+.nearby-work-detail-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #007bff;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+.nearby-work-detail-link:hover {
+  background-color: #e7f3ff;
+  text-decoration: underline;
+}
+
+/* 周辺作品から来た時に表示される「前の作品に戻る」ボタン */
+#back-to-previous-button {
+  width: 100%; /* 横幅いっぱい */
+  margin-bottom: 10px; /* 下の作者情報との隙間 */
+  text-align: left; /* 文字を左揃え */
+  padding-left: 15px; /* 左側に少し余白 */
+  box-sizing: border-box;
+}
+
+/* --- プログレスバー（鑑賞ステップ） --- */
+.progress-bar-container {
+  display: flex;
+  justify-content: center;
+  width: auto;
+  background-color: transparent;
+  border-bottom: none;
+  flex-shrink: 1; /* 必要に応じて縮む */
+  flex-grow: 1; /* 可能な限り広がる */
+  padding: 0;
+  margin: 0 15px;
+  box-sizing: border-box;
+}
+
+.progress-step {
+  text-align: center;
+  padding: 10px 5px;
+  font-size: 0.9em; /* 邪魔にならないよう小さめに */
+  color: #999; /* 非アクティブなステップ */
+  border-bottom: none;
+  position: relative;
+  transition: all 0.3s ease;
+  white-space: nowrap; /* 折り返さない */
+  overflow: hidden; /* はみ出し防止 */
+  text-overflow: ellipsis; /* 文字がはみ出たら...にする */
+}
+
+/* 現在のステップ (active) */
+.progress-step.active {
+  color: #007bff; /* メインカラー */
+  font-weight: bold;
+}
+
+/* 完了したステップ (completed) */
+.progress-step.completed {
+  color: #555; /* 少し濃いグレー */
+}
+
+/* ステップの間に > を入れる (最後の子以外) */
+.progress-step:not(:last-child)::after {
+  content: ">";
+  font-weight: bold;
+  color: #bbb; /* 区切り文字の色 */
+  margin: 0 8px; /* 区切り文字の左右の余白 */
+  /* ↓ 押せないようにポインターイベントを無効化 */
+  pointer-events: none; 
 }

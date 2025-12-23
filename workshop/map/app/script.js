@@ -7,7 +7,7 @@ require([
 
   const webmap = new WebMap({
     portalItem: {
-      id: "36d0117d7ff24d5c8d46c10a986da0d2"
+      id: "fef70d22c8bd4545be008db3c813117c"
     }
   });
 
@@ -24,9 +24,8 @@ require([
   view.when(() => {
 
     // 凡例
-    const customLegendTitles = {"naisui_clip": "下水があふれる洪水（内水氾濫）","gaisui_clip": "川の水があふれる洪水（外水氾濫）","kyukeisha_clip" : "土砂災害","takashio_clip": "高潮（浸水深）","tsunami_clip": "津波（浸水深、慶長型地震）","jishindo_clip": "震度情報（元禄型関東地震）","shoshitsu_clip": "地震火災（元禄型関東地震）","ekijyouka_clip": "地盤の液状化（元禄型関東地震）"};
+    const customLegendTitles = {"naisui_R7_clip": "下水があふれる洪水（内水氾濫）","gaisui_clip": "川の水があふれる洪水（外水氾濫）","kyukeisha_R7_clip" : "土砂災害","takashio_clip": "高潮（浸水深）","tsunami_clip": "津波（浸水深、慶長型地震）","jishindo_clip": "震度情報（元禄型関東地震）","shoshitsu_clip": "地震火災（元禄型関東地震）","ekijyouka_clip": "地盤の液状化（元禄型関東地震）"};
     const legendLayers = webmap.allLayers.filter(layer => layer.title.includes("_clip")).map(layer => ({ layer: layer, title: customLegendTitles[layer.title] || layer.title }));
-    
     const legend = new Legend({
       view: view,
       layerInfos: legendLayers.toArray()
@@ -61,9 +60,9 @@ require([
         checkbox.addEventListener('change', () => { layer.visible = checkbox.checked; });
       }
     }
-    setupLayerToggle("naisui_clip", "naisui-filter");
+    setupLayerToggle("naisui_R7_clip", "naisui-filter");
     setupLayerToggle("gaisui_clip", "gaisui-filter");
-    setupLayerToggle("kyukeisha_clip", "kyukeisha-filter");
+    setupLayerToggle("kyukeisha_R7_clip", "kyukeisha-filter");
     setupLayerToggle("takashio_clip", "takashio-filter");
     setupLayerToggle("tsunami_clip", "tsunami-filter");
     setupLayerToggle("jishindo_clip", "jishindo-filter");
@@ -109,55 +108,6 @@ require([
 
     const artPinsLayer = webmap.allLayers.find(layer => layer.title === "survey");
     if (!artPinsLayer) return;
-
-    // 閲覧済みピンの処置
-    let highlightHandle = null;
-    view.whenLayerView(artPinsLayer).then(layerView => {
-      const viewedIds = JSON.parse(localStorage.getItem("viewedArtIds")) || [];
-      if (viewedIds.length > 0) {
-        const query = artPinsLayer.createQuery();
-        query.objectIds = viewedIds;
-        artPinsLayer.queryFeatures(query).then(result => {
-          if (highlightHandle) {
-            highlightHandle.remove();
-          }
-          highlightHandle = layerView.highlight(result.features);
-        });
-      }
-    });
-
-    // ホバーでポップアップ
-    artPinsLayer.popupEnabled = false;
-    view.popup.dockOptions = { buttonEnabled: false };
-    view.popup.visibleElements = { closeButton: false };
-    let currentObjectId = null;
-    view.on("pointer-move", function(event) {
-      view.hitTest(event).then(function(response) {
-        const result = response.results.find(result => result.graphic.layer === artPinsLayer);
-        if (result) {
-          const objectId = result.graphic.attributes.objectid;
-          if (currentObjectId !== objectId) {
-            currentObjectId = objectId;
-            const query = { objectIds: [objectId], outFields: ["*"] };
-            artPinsLayer.queryFeatures(query).then(function(featureSet) {
-              if (!featureSet.features.length) return;
-              const attributes = featureSet.features[0].attributes;
-              artPinsLayer.queryAttachments({ objectIds: [objectId] }).then(function(attachments) {
-                const imageUrl = (attachments[objectId] && attachments[objectId].length > 0) ? attachments[objectId][0].url : "";
-                const contentHtml = `
-                <div class="popup-content-vertical">
-                <p class="popup-author">作者：${attributes.field_25}</p>
-                <img src="${imageUrl}" class="popup-image-vertical">
-                </div>`;
-                view.popup.open({ title: "", content: contentHtml, location: result.graphic.geometry });
-              });
-            });
-          }
-        } else {
-          view.popup.close();
-          currentObjectId = null;
-        }
-      });
-    });
+    artPinsLayer.visible = false;
   });
 });

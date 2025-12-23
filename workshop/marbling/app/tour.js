@@ -87,17 +87,34 @@ class Tour {
     const chapter = this.chapters[this.ci];
     const step = chapter.steps[this.si];
 
-    // ターゲット解決
+    // --- ターゲット解決（modalでもtarget/targetsがあればハイライトできるよう修正） ---
     let targets = [];
-    if (step.type !== "modal") {
-      if (Array.isArray(step.targets)) {
-        targets = step.targets.map(sel => document.querySelector(sel)).filter(Boolean);
-      } else if (step.target) {
-        const el = document.querySelector(step.target);
-        if (el) targets = [el];
+    const hasSelectors = Array.isArray(step.targets) || !!step.target;
+
+    if (hasSelectors) {
+      const sels = Array.isArray(step.targets) ? step.targets : [step.target];
+      targets = sels.map(sel => document.querySelector(sel)).filter(Boolean);
+
+      // 要素が見つからない場合は少しリトライ（遅延レンダー対策）
+      if (targets.length === 0) {
+        let tries = 0;
+        const timer = setInterval(() => {
+          tries++;
+          targets = sels.map(sel => document.querySelector(sel)).filter(Boolean);
+          if (targets.length || tries > 20) {
+            clearInterval(timer);
+            if (targets.length) {
+              try { targets[0].scrollIntoView({ block: "center", inline: "center" }); } catch {}
+              this.highlight(targets, step.box === "multi" ? "multi" : "union");
+            } else {
+              this.nextStep();
+            }
+          }
+        }, 50);
+      } else {
+        try { targets[0].scrollIntoView({ block: "center", inline: "center" }); } catch {}
+        this.highlight(targets, step.box === "multi" ? "multi" : "union");
       }
-      if (targets.length === 0) return this.nextStep();
-      try { targets[0].scrollIntoView({ block: "center", inline: "center" }); } catch {}
     }
 
     // UI

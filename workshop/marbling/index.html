@@ -10,16 +10,16 @@
   window.WS_STEP = {
     index:3, total:6, title:'マーブリング制作',
     mission: {
-      purpose: '先ほど決めた対象地点・区域に対して、災害リスクをアートで表現しよう。',
+      purpose: '先ほど決めた対象地点/区域に対して、災害リスクをアートで表現しよう。',
       steps: [
         '下の機能の説明を確認する。',
-        '右上の「地図」から、対象地点・区域のハザードマップを再確認できます。', 
+        '右上の「地図」から、対象地点/区域のハザードマップを再確認できます。', 
         'マーブリングツールを使って、地域の特徴や災害リスクを表現する。'
       ],
       goal: '作品としてのマーブリング作品が完成したら、このセクションは完了です。'
     },
-    next:'../collage/index.html',
-    mapUrl:'../map/app/index.html',
+    next:'/bo-sci-2025-10//workshop/collage/index.html',
+    mapUrl:'/bo-sci-2025-10//workshop/map/app/index.html',
     surveyHint:'今回の入力：設問5',
     gateKey:'gate:step3',
     surveyOpenMode:'tab'  // iPadメインなら 'tab' 推奨。Cookie許可のPCなら 'panel' でもOK
@@ -27,7 +27,7 @@
 </script>
 
 <!-- 2) 共通スタイル（白ベース版） -->
-<link rel="stylesheet" href="../common/styles.css" />
+<link rel="stylesheet" href="/bo-sci-2025-10/workshop/common/styles.css" />
 
 <style>
   /* 3) iframeを“ほぼ全画面”で使うための調整 */
@@ -54,7 +54,7 @@
   <div class="frame-wrap">
     <!-- 5) ここに既存アプリの index.html を読み込む -->
     <iframe
-      src="./app/index.html"
+      src="/bo-sci-2025-10/workshop/marbling/app/index.html"
       allow="fullscreen"
       referrerpolicy="no-referrer-when-downgrade">
     </iframe>
@@ -62,6 +62,6 @@
 </main>
 
 
-<script src="../common/nav.js"></script>
+<script src="/bo-sci-2025-10/workshop/common/nav.js"></script>
 </body>
 </html>

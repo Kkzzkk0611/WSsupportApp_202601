@@ -8,7 +8,7 @@ require([
 
   const webmap = new WebMap({
     portalItem: {
-      id: "fae46914acba46b98226dd452fee9e8f"
+      id: "fef70d22c8bd4545be008db3c813117c"
     }
   });
 
@@ -25,7 +25,7 @@ require([
 
   view.when(() => {
 
-    // --- 1. 凡例ウィジェット ---
+    // 凡例
     const customLegendTitles = {
       "naisui_R7_clip": "下水があふれる洪水（内水氾濫）",
       "gaisui_clip": "川の水があふれる洪水（外水氾濫）",
@@ -37,7 +37,7 @@ require([
       "ekijyouka_clip": "地盤の液状化（元禄型関東地震）"
     };
     const legendLayers = webmap.allLayers
-      .filter(layer => layer.title.includes("_clip"))
+      .filter(layer => layer.title.includes("_clip")) // クリップと書いてあるもののみ
       .map(layer => ({ layer: layer, title: customLegendTitles[layer.title] || layer.title }));
 
     const legend = new Legend({
@@ -46,7 +46,7 @@ require([
     });
     view.ui.add(legend, "bottom-right");
 
-    // --- 2. ベースマップ切り替え ---
+    // ベースマップ切り替え
     const whiteMapBtn = document.getElementById("white-map-btn");
     const satelliteBtn = document.getElementById("satellite-btn");
     const satelliteLayer = webmap.allLayers.find(layer => layer.title === "衛星画像（World Imagery）");
@@ -65,7 +65,7 @@ require([
       });
     }
 
-    // --- 3. タブ切り替え ---
+    // タブ切り替え
     const hazardTab = document.getElementById("hazard-tab");
     const resourceTab = document.getElementById("resource-tab");
     const themeTab = document.getElementById("theme-tab");
@@ -100,7 +100,7 @@ require([
       themeContent.style.display = "block";
     });
 
-    // --- 4. レイヤーの表示切り替え関数 ---
+    // レイヤーの表示切り替え
     function setupLayerToggle(layerTitle, checkboxId) {
       const layer = webmap.allLayers.find(l => l.title === layerTitle);
       const checkbox = document.getElementById(checkboxId);
@@ -112,7 +112,6 @@ require([
       }
     }
 
-    // （ここは省略せずに全部のlayerを登録）
     setupLayerToggle("naisui_R7_clip", "naisui_R7-filter");
     setupLayerToggle("gaisui_clip", "gaisui-filter");
     setupLayerToggle("kyukeisha_R7_clip", "kyukeisha_R7-filter");
@@ -136,7 +135,7 @@ require([
     setupLayerToggle("kyusuitank", "kyusuitank-filter");
     setupLayerToggle("haisuisou", "haisuisou-filter");
 
-    // --- 5. シンボル画像の追加 ---
+    //  sシンボル画像の追加-
     async function addSymbolToResourceList() {
       const resourceOptions = document.querySelectorAll('#resource-filters .filter-option');
       for (const option of resourceOptions) {
@@ -179,7 +178,7 @@ require([
     }
     addSymbolToResourceList();
 
-    // --- 6. ハザード並べ替え機能 ---
+    // ハザード並べ替え機能
     const hazardFilters = document.getElementById("hazard-filters");
     hazardFilters.addEventListener("click", function(event) {
       const button = event.target.closest(".reorder-button");
@@ -214,7 +213,7 @@ require([
       }
     });
 
-    // --- 7. survey（アートピン）レイヤー処理 ---
+    // surveyレイヤー
     const artPinsLayer = webmap.allLayers.find(layer => layer.title === "survey");
     if (!artPinsLayer) return;
 
@@ -231,7 +230,42 @@ require([
       }
     });
 
-    // --- 4. ポップアップとクリックイベント（タップ対応）---
+    // 3.テーマによる作品絞り込み機能
+    const themeKeywords = {'地震': ['揺れ', 'ブロック塀', 'ガラス', 'エレベーター', '電柱', '電線'],'火災': ['消火', '煙', '報知器', '通報', '漏電'],'津波': ['高台', 'ビル', '警報', 'サイレン', '引き波', '垂直'],'液状化': ['マンホール', '噴砂', '地盤沈下', '埋立地'],'土砂災害': ['崖', '崖崩れ', '土石流', '地すべり'],'気象': ['大雨', '台風', '雷', '雪', '竜巻', '強風'],'火山': ['噴火', '火山灰', '噴石', '火砕流', '溶岩', 'マスク', '屋内'],'洪水': ['内水氾濫', '深水', '地下', '排水溝', 'アンダーパス', '屋根'],'高潮': ['防波堤', '海岸', '河口', '満潮', '河川逆流'],'避難': ['安全', '危険', '非常', 'リスク', 'ハザードマップ', '経路', '訓練', '防災バッグ', '車'],'インフラ': ['道路', '橋', '電気', 'ガス', '水道', '電波', '通信'],'備蓄': ['水', '食料', 'ヘルメット', '軍手', '靴', 'バッテリー', '家'],'行動主体': ['住民', '学生', '子ども', '高齢者', '外国人', 'ペット', 'ボランティア'],'情報': ['SNS', 'ラジオ', 'デマ', 'フェイク', '携帯', '無線', '充電'],'衛生': ['感染症', '消毒', '薬', 'トイレ', 'ゴミ', '体調管理'],'救助': ['声かけ', '自助', '共助', '安否', '応急手当', '病院', '救急', 'AED'],'感情': ['ストレス', '不安', '孤立', '安心', '希望', 'つながり']};
+    const themeButtonsContainer = document.querySelector(".theme-buttons");
+    const allButton = document.createElement("span");
+    allButton.className = "theme-button active";
+    allButton.textContent = "すべて表示";
+    allButton.dataset.theme = "all";
+    themeButtonsContainer.appendChild(allButton);
+    Object.keys(themeKeywords).forEach(theme => {
+      const button = document.createElement("span");
+      button.className = "theme-button";
+      button.textContent = theme;
+      button.dataset.theme = theme;
+      themeButtonsContainer.appendChild(button);
+    });
+    themeButtonsContainer.addEventListener("click", function(event) {
+      const clickedButton = event.target;
+      if (!clickedButton.classList.contains("theme-button")) return;
+      themeButtonsContainer.querySelectorAll(".theme-button").forEach(btn => { btn.classList.remove("active"); });
+      clickedButton.classList.add("active");
+      const selectedTheme = clickedButton.dataset.theme;
+      if (selectedTheme === "all") {
+        artPinsLayer.definitionExpression = null;
+      } else {
+        const searchFields = ['Mabling', 'Message', 'collage'];
+        const keywords = themeKeywords[selectedTheme];
+        const allConditions = keywords.map(kw => {
+          const fieldConditions = searchFields.map(field => `${field} LIKE '%${kw}%'`).join(" OR ");
+          return `(${fieldConditions})`;
+        });
+        const whereClause = allConditions.join(" OR ");
+        artPinsLayer.definitionExpression = whereClause;
+      }
+    });
+    
+    // 4.ポップアップとクリックイベント
     let currentlyOpenPinId = null;
     artPinsLayer.popupEnabled = false; 
     view.popup.dockOptions = { buttonEnabled: false };
@@ -243,20 +277,18 @@ require([
         const result = response.results.find(result => result.graphic.layer === artPinsLayer);
 
         if (result) {
-          // --- 1. ピンがクリックされた場合 ---
+          // ピンがクリックされた
           const clickedObjectId = result.graphic.attributes.objectid;
 
           if (currentlyOpenPinId === clickedObjectId) {
-            // --- 2.【2回目クリック】開いているピンが再度クリックされた ---
-            console.log(`2回目クリック: ID ${clickedObjectId} 鑑賞ページへ遷移します。`);
+            // 2回目クリック
             
             window.location.href = `detail.html?id=${clickedObjectId}`;
             currentlyOpenPinId = null;
             view.popup.close(); 
             
           } else {
-            // --- 3.【1回目クリック】新しいピンがクリックされた ---
-            console.log(`1回目クリック: ID ${clickedObjectId} ポップアップを表示します。`);
+            // 1回目クリック
             
             currentlyOpenPinId = clickedObjectId;
             
@@ -268,8 +300,6 @@ require([
               artPinsLayer.queryAttachments({ objectIds: [clickedObjectId] }).then(function(attachments) {
                 const imageUrl = (attachments[clickedObjectId] && attachments[clickedObjectId].length > 0) ? attachments[clickedObjectId][0].url : "";
                 
-                // ★★★ 修正点① ★★★
-                // 「詳細を見る」ボタンを削除し、案内のテキストに変更
                 const contentHtml = `
                 <div class="popup-content-vertical">
                   <p class="popup-author">作者：${attributes.field_25}</p>
@@ -279,7 +309,6 @@ require([
                   </p>
                 </div>`;
 
-                // ★★★ 修正点② ★★★
                 // ポップアップの位置をピンから少しずらす（オフセット）
                 const mapPoint = result.graphic.geometry;
                 const screenPoint = view.toScreen(mapPoint);
@@ -294,19 +323,18 @@ require([
                 view.popup.open({ 
                   title: "", 
                   content: contentHtml, 
-                  location: offsetMapPoint // ← 修正！ result.graphic.geometry から変更
+                  location: offsetMapPoint
                 });
               });
             });
           }
 
         } else {
-          // --- 4. ピン以外の場所（地図）がクリックされた場合 ---
-          console.log("地図をクリック。ポップアップを閉じます。");
+          // 4. ピン以外の場所（地図）がクリックされた場合
           view.popup.close();
           currentlyOpenPinId = null; 
         }
       });
-    });
+    });  
   });
 });

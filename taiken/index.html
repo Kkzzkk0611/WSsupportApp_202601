@@ -12,7 +12,7 @@
         <!-- <link rel="apple-touch-icon" href="logo.png">
         <link rel="icon" href="logo.png"> -->
 
-        <title>WebGL Fluid Simulation</title>
+        <title>防災×市民科学×アート 体験ツール</title>
         <meta name="description" content="A WebGL fluid simulation that works in mobile browsers.">
 
         <!-- <meta property="og:type" content="website">
@@ -35,29 +35,9 @@
     <body>
         <div id="app">
             <aside id="controls" aria-label="コントロール">
+                <!--
                 <section>
-                    <h2 class="section-title-with-help">
-                        解像度
-                        <button id="help-btn" class="help-button" aria-label="チュートリアルを開く" title="チュートリアルを開く"></button>
-                    </h2>
-                    <label for="ctrl-dye-res">画像の解像度</label>
-                    <select id="ctrl-dye-res">
-                        <option value="1024">1024</option>
-                        <option value="512">512</option>
-                        <option value="256">256</option>
-                        <option value="128">128</option>
-                    </select>
-                    <label for="ctrl-sim-res">解析の解像度</label>
-                    <select id="ctrl-sim-res">
-                        <option value="32">32</option>
-                        <option value="64">64</option>
-                        <option value="128">128</option>
-                        <option value="256">256</option>
-                        <option value="512">512</option>
-                    </select>
-                </section>
-                <section>
-                    <h2>液体</h2>
+                <h2>液体</h2>
                     <label for="ctrl-vel-diss">粘り</label>
                     <input type="range" id="ctrl-vel-diss" min="0" max="4" step="0.01">
                     <label for="ctrl-pressure">圧力の大きさ</label>
@@ -65,23 +45,37 @@
                     <label for="ctrl-curl">渦の出やすさ</label>
                     <input type="range" id="ctrl-curl" min="0" max="10" step="1">
                 </section>
+                -->
                 <!-- 描画・操作 -->
                 <section>
-                <h2>描画・操作</h2>
-                <button id="ctrl-paint-toggle" data-tour="play-toggle">絵の具を塗る</button>
+                <div class="section-header">
+                    <h2>描画・操作</h2>
+                    <button id="help-btn" class="help-button" aria-label="チュートリアルを開く" title="チュートリアルを開く">？</button>
+                </div>
+
+                <!-- 2ボタン：モード切替 -->
+                <div class="mode-toggle">
+                    <button id="ctrl-mode-paint" class="mode-btn" data-tour="play-toggle">絵の具を塗る</button>
+                    <button id="ctrl-mode-fluid" class="mode-btn">流体を動かす</button>
+                </div>
+
                 <label for="ctrl-brush">ブラシの大きさ</label>
                 <input type="range" id="ctrl-brush" min="0.01" max="0.3" step="0.01" data-tour="brush-size">
-                <label for="ctrl-fore-color">絵の具の色</label>
-                <input type="color" id="ctrl-fore-color" data-tour="color-picker">
-                </section>
 
-                <!-- ユーティリティ -->
-                <section>
-                <h2>ユーティリティ</h2>
-                <button id="ctrl-random-splat" data-tour="splat">ランダム配置</button>
-                <button id="ctrl-save" data-tour="export">作品の保存</button>
+                <label for="ctrl-fore-color">絵の具の色</label>
+                <input type="color" id="ctrl-fore-color">
+
+                <div id="ctrl-palette" class="color-picker">
+                    <select id="palette-select" aria-label="パレット選択">
+                    <option value="Basic">Basic</option>
+                    <option value="Pastel">Pastel</option>
+                    <option value="Warm">Warm</option>
+                    <option value="Cool">Cool</option>
+                    </select>
+                    <div id="swatches" class="swatches" role="listbox" aria-label="プリセット色"></div>
+                </div>
                 </section>
-                <section>
+                <!--<section>
                     <h2>フィルター</h2>
                     <button id="ctrl-filter-sketch">スケッチ風</button>
                     <div id="ctrl-filter-sketch-params" style="display:none;">
@@ -90,14 +84,17 @@
                         <label>段階数</label><input id="ctrl-levels" type="range" min="2" max="8" step="1">
                         <label>彩度</label><input id="ctrl-saturation" type="range" min="0" max="1" step="0.01">
                     </div>
-                </section>
+                </section>-->
             </aside>
             <main id="stage">
                 <canvas></canvas>
             </main>
+            <button id="end-experience-btn" class="end-experience-btn">
+            体験ツールを終える
+            </button>
         </div>
-        <script src="./script.js"></script>
-        <script type="module" src="./tour-config.js"></script>
-        <script type="module" src="./tour.js"></script>
+        <script type="module" src="/bo-sci-2025-10/taiken/tour-config.js"></script>
+        <script type="module" src="/bo-sci-2025-10/taiken/tour.js"></script>
+        <script src="C:\Users\kazuk\OneDrive\ドキュメント\小檜山研究室\開発\bo-sci-2025-10\taiken\script.js"></script>
     </body>
 </html>

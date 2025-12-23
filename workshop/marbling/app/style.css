@@ -543,3 +543,51 @@ canvas {
   z-index: 10000;
   pointer-events: none; /* ツアー中でも操作可 */
 }
+
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 右端にボタンを寄せる */
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.help-button {
+  background: #ddd;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.help-button:hover {
+  background: #bbb;
+}
+
+
+.end-experience-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  padding: 10px 18px;
+  font-size: 14px;
+  background-color: #f87171; /* 赤系 */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 9999; /* キャンバスより前に出す */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.end-experience-btn:hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
+}

@@ -23,8 +23,7 @@
 
         <script type="text/javascript" src="dat.gui.min.js"></script>
         <link rel="stylesheet" type="text/css" href="style.css"></link>
-        <!-- <link rel="stylesheet" href="../shared/palette.css"> 削除 -->
-
+        
         <script>
             window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};
             // ga.l=+new Date;
@@ -49,25 +48,33 @@
                 -->
                 <!-- 描画・操作 -->
                 <section>
-                <h2>描画・操作</h2>
-                  <!-- 2ボタン：モード切替 -->
+                <div class="section-header">
+                    <h2>描画・操作</h2>
+                    <button id="help-btn" class="help-button" aria-label="チュートリアルを開く" title="チュートリアルを開く">？</button>
+                </div>
+
+                <!-- 2ボタン：モード切替 -->
                 <div class="mode-toggle">
                     <button id="ctrl-mode-paint" class="mode-btn" data-tour="play-toggle">絵の具を塗る</button>
                     <button id="ctrl-mode-fluid" class="mode-btn">流体を動かす</button>
                 </div>
+
                 <label for="ctrl-brush">ブラシの大きさ</label>
                 <input type="range" id="ctrl-brush" min="0.01" max="0.3" step="0.01" data-tour="brush-size">
+
                 <label for="ctrl-fore-color">絵の具の色</label>
                 <input type="color" id="ctrl-fore-color">
+
                 <div id="ctrl-palette" class="color-picker">
-                <select id="palette-select" aria-label="パレット選択">
+                    <select id="palette-select" aria-label="パレット選択">
                     <option value="Basic">Basic</option>
                     <option value="Pastel">Pastel</option>
                     <option value="Warm">Warm</option>
                     <option value="Cool">Cool</option>
-                </select>
-                <div id="swatches" class="swatches" role="listbox" aria-label="プリセット色"></div>
+                    </select>
+                    <div id="swatches" class="swatches" role="listbox" aria-label="プリセット色"></div>
                 </div>
+                </section>
 
                 <!-- ユーティリティ -->
                 <section>
@@ -89,8 +96,6 @@
             <main id="stage">
                 <canvas></canvas>
             </main>
-            <button id="help-btn" class="help-button" aria-label="チュートリアルを開く" title="チュートリアルを開く">？
-            </button>
         </div>
         <script type="module" src="./tour-config.js"></script>
         <script type="module" src="./tour.js"></script>

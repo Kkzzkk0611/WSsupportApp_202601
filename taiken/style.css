@@ -1,3 +1,6 @@
+/* iPadのページパン/ズームで座標がブレるのを防止 */
+canvas { touch-action: none; }
+
 @font-face {
     font-family: 'iconfont';
     src: url('iconfont.ttf') format('truetype');
@@ -413,3 +416,178 @@ canvas {
 }
 
 
+/* === Help button fixed on top-right === */
+#help-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000; /* canvasより前に出す */
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(243, 132, 6, 0.65);
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0,0,0,.3);
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+#help-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.05);
+}
+
+#help-btn:active {
+  transform: scale(0.95);
+}
+
+/* === Mode toggle buttons === */
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.mode-btn {
+  min-height: 40px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #222;
+  color: #eee;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease, transform .05s ease;
+}
+.mode-btn:hover { transform: translateY(-1px); }
+.mode-btn:active { transform: translateY(0); }
+/* .mode-btn.is-active {
+  background: #fff;
+  color: #111;
+  border-color: #fff;
+} */
+#controls .mode-btn.is-active {
+  background: #fff;
+  color: #111;
+  border-color: #fff;
+}
+
+/* === Palette styles for コラージュ === */
+#controls .color-picker {
+  margin: 8px 0 16px 0;
+}
+#controls .color-picker .swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+#controls .color-picker .swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #444;
+  background: var(--swatch-color, #fff);
+  cursor: pointer;
+  margin: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  outline: none;
+  transition: box-shadow .15s, border-color .15s;
+  position: relative;
+}
+#controls .color-picker .swatch:focus {
+  border-color: #7aa2ff;
+  box-shadow: 0 0 0 2px #7aa2ff;
+}
+#controls .color-picker .swatch.is-active {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px #22c55e;
+}
+#controls .color-picker .swatch::after {
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+#controls .color-picker .swatch.is-active::after {
+  border-color: #22c55e;
+}
+#controls .color-picker .palette-select {
+  margin-bottom: 4px;
+  width: 100%;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #222;
+  color: #eee;
+  padding: 4px 8px;
+}
+
+.tour-outline {
+  transition: top .18s, left .18s, width .18s, height .18s;
+}
+
+/* 画面全体を暗くする一枚の幕。穴は CSS/SVG マスクで開ける */
+.tour-dimmer {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 10000;
+  pointer-events: none; /* ツアー中でも操作可 */
+}
+
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 右端にボタンを寄せる */
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.help-button {
+  background: #ddd;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.help-button:hover {
+  background: #bbb;
+}
+
+
+.end-experience-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  padding: 10px 18px;
+  font-size: 14px;
+  background-color: #f87171; /* 赤系 */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 9999; /* キャンバスより前に出す */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.end-experience-btn:hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
+}

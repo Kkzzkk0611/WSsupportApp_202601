@@ -212,10 +212,67 @@
     if (sheetClose) sheetClose.addEventListener('click', function(){ sheet.classList.remove('open'); });
   }
 
-  // --- 次へ（ゲート未完なら警告） ---
-  var nextBtn = document.getElementById('nextBtn');
-  if (nextBtn) nextBtn.addEventListener('click', function(){
-    if (S.next) location.href = S.next;
+  // --- 次へ（マーブリング・コラージュページで警告バナー付き） ---
+  document.addEventListener('click', function (ev) {
+    const nextBtn = ev.target.closest('#nextBtn');
+    if (!nextBtn) return; // 「次へ」以外は無視
+
+    const currentPath = location.pathname || '';
+    const isMarblingPage = currentPath.includes('/marbling/');
+    const isCollagePage  = currentPath.includes('/collage/');
+    const showBanner = isMarblingPage || isCollagePage;
+
+    const S = window.WS_STEP || {};
+
+    // ▼ 該当ページ以外 → 通常遷移
+    if (!showBanner) {
+      if (S.next) location.href = S.next;
+      return;
+    }
+
+    // ▼ 該当ページのみ：バナーを出す
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    // すでに表示中なら何もしない（多重防止）
+    if (document.getElementById('save-confirm-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'save-confirm-banner';
+    banner.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #facc15;
+      color: #111;
+      font-weight: bold;
+      padding: 12px 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 9999;
+    `;
+
+    banner.innerHTML = `
+      <span>⚠️ 作品を保存しましたか？</span>
+      <button id="confirmYes" style="padding:6px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;">はい</button>
+      <button id="confirmNo" style="padding:6px 12px;background:#fff;color:#111;border:1px solid #111;border-radius:6px;">いいえ</button>
+    `;
+
+    document.body.appendChild(banner);
+
+    // ▼ ボタン動作
+    document.getElementById('confirmYes').addEventListener('click', () => {
+      banner.remove();
+      if (S.next) location.href = S.next; // 次ページへ進む
+    });
+
+    document.getElementById('confirmNo').addEventListener('click', () => {
+      banner.remove(); // 閉じるだけ
+    });
   });
 
   // --- 戻る ---

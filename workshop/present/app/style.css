@@ -46,17 +46,19 @@ html, body {
 }
 
 /* 詳細を見るボタン */
-.popup-prompt {
-  margin-top: 4px;
-  padding: 8px;
-  font-size: 0.9em;
-  font-weight: bold;
-  text-align: center;
-  color: #333;
-  background-color: #FFEB3B;
-  border-radius: 4px;
-  width: 100%;
-  box-sizing: border-box; /* paddingを含めて幅を計算 */
+.popup-prompt {/* ▼ ボタンっぽさを消すための調整 ▼ */
+  background-color: transparent; /* 背景色を透明にする */
+  border: none;               /* 枠線をなくす */
+  padding: 8px 0 0 0;       /* 上にだけ少し余白（8px）を持たせる */
+  margin-top: 5px;          /* 画像との間に少し隙間をあける */
+  box-shadow: none;           /* 影があるなら消す */
+  cursor: default;            /* マウスカーソルを矢印（標準）にする */
+
+  /* ▼ 色と文字の調整 ▼ */
+  color: #666;               /* 文字色を落ち着いたグレーに */
+  font-size: 0.9em;         /* 文字サイズを少し小さく */
+  font-weight: normal;        /* 太字じゃなく普通にする */
+  text-align: center;       /* 中央揃えは維持 */
 }
 
 /* ポップアップの内部の余白を調整してスリムにする */
@@ -281,4 +283,3 @@ html, body {
   color: white;
   font-weight: bold;
 }
-

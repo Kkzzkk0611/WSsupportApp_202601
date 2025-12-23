@@ -16,6 +16,7 @@ window.WS_STEP = {
     steps: [
       '選んだ対象地点/区域において考えられる防災行動を考える。',
       'マーブリング作品の上にコラージュを重ねて、行動を表現する。',
+      '先ほど保存した写真を左上の「ファイルを選択」からアップロードしてください。',
       'できあがった作品の説明をワークシートに記録する。'
     ],
     goal: '防災行動の意図が伝わるコラージュ作品が完成し、ワークシートの設問5に記録できたら完了です。',
@@ -43,7 +44,8 @@ window.WS_STEP = {
       }
     }
   },
-  next: '../message/index.html',
+  next: '/bo-sci-2025-10/workshop/message/index.html',
+  mapUrl:'/bo-sci-2025-10/workshop/map/app/index.html',
   surveyUrl: 'https://survey123.arcgis.com/share/cff62fc5070c4f468b2c9269d5b2535f',  // ←実URL
   surveyHint: '今回の入力：設問6（コラージュで表現した防災行動の説明）',
   gateKey: 'gate:step4'
@@ -51,7 +53,7 @@ window.WS_STEP = {
 </script>
 
 
-<link rel="stylesheet" href="../common/styles.css" />
+<link rel="stylesheet" href="/bo-sci-2025-10/workshop/common/styles.css" />
 
 <style>
   main.stage { padding: 0; }
@@ -75,13 +77,13 @@ window.WS_STEP = {
   <div class="frame-wrap">
     <!-- ここに既存コラージュの index.html を読み込む -->
     <iframe
-      src="./app/index.html"
+      src="/bo-sci-2025-10/workshop/collage/app/index.html"
       allow="fullscreen"
       referrerpolicy="no-referrer-when-downgrade">
     </iframe>
   </div>
 </main>
 
-<script src="../common/nav.js"></script>
+<script src="/bo-sci-2025-10/workshop/common/nav.js"></script>
 </body>
 </html>

@@ -1,31 +1,32 @@
 // tour.js
 import { GUIDE } from "./tour-config.js";
 
-const LS = {
-  done: id => `tour.${id}.done`
-};
+const LS = { done: id => `tour.${id}.done` };
 
 class Tour {
   constructor() {
-    this.chapters = GUIDE.chapters;
+    this.chapters = GUIDE.chapters || [];
     this.ci = 0;
     this.si = 0;
     this.active = false;
+
+    // UI refs
     this.overlay = null;
+    this.dimmer = null;
     this.pop = null;
-    this.outline = null;
+    this.outlineLayer = null;
+    this.outlines = [];
+
     this.cleanupFns = [];
     this.keyHandler = this.onKey.bind(this);
   }
 
   start(chapterId = null) {
-    // 既に完了した章はスキップして次へ
     if (chapterId) {
       this.ci = this.chapters.findIndex(c => c.id === chapterId);
       if (this.ci < 0) this.ci = 0;
     } else {
       this.ci = 0;
-      // introが終わっていれば次の未完了章に飛ぶ
       for (let i = 0; i < this.chapters.length; i++) {
         if (!localStorage.getItem(LS.done(this.chapters[i].id))) { this.ci = i; break; }
       }
@@ -42,10 +43,10 @@ class Tour {
     document.removeEventListener("keydown", this.keyHandler);
     this.teardownUI();
   }
+
   skip() {
-    // 現在の章をスキップ
     const chapter = this.chapters[this.ci];
-    localStorage.setItem(LS.done(chapter.id), "1");
+    if (chapter?.id) localStorage.setItem(LS.done(chapter.id), "1");
     this.end();
   }
 
@@ -60,66 +61,80 @@ class Tour {
     const chapter = this.chapters[this.ci];
     this.si++;
     if (this.si >= chapter.steps.length) {
-      localStorage.setItem(LS.done(chapter.id), "1");
+      if (chapter?.id) localStorage.setItem(LS.done(chapter.id), "1");
       return this.nextChapter();
     }
     this.runStep();
   }
 
-  // Tour クラスのどこでも良い（runStepより上が見通し良い）
-    canPrev() {
+  canPrev() {
     return !(this.ci === 0 && this.si === 0);
-    }
-    prevStep() {
+  }
+  prevStep() {
     this.clearStep();
     if (this.si > 0) {
-        this.si--;
+      this.si--;
     } else if (this.ci > 0) {
-        this.ci--;
-        const prevChapter = this.chapters[this.ci];
-        this.si = prevChapter.steps.length - 1;
+      this.ci--;
+      const prevChapter = this.chapters[this.ci];
+      this.si = prevChapter.steps.length - 1;
     }
     this.runStep();
-    }
+  }
 
   runStep() {
     this.clearStep();
     const chapter = this.chapters[this.ci];
     const step = chapter.steps[this.si];
 
-    // ターゲットの取得（modalなら不要）
-    let target = null;
-    if (step.type !== "modal" && step.target) {
-      target = document.querySelector(step.target);
-      if (!target || !this.isVisible(target)) {
-        // 無ければスキップ
-        return this.nextStep();
+    // --- ターゲット解決（modalでもtarget/targetsがあればハイライトできるよう修正） ---
+    let targets = [];
+    const hasSelectors = Array.isArray(step.targets) || !!step.target;
+
+    if (hasSelectors) {
+      const sels = Array.isArray(step.targets) ? step.targets : [step.target];
+      targets = sels.map(sel => document.querySelector(sel)).filter(Boolean);
+
+      // 要素が見つからない場合は少しリトライ（遅延レンダー対策）
+      if (targets.length === 0) {
+        let tries = 0;
+        const timer = setInterval(() => {
+          tries++;
+          targets = sels.map(sel => document.querySelector(sel)).filter(Boolean);
+          if (targets.length || tries > 20) {
+            clearInterval(timer);
+            if (targets.length) {
+              try { targets[0].scrollIntoView({ block: "center", inline: "center" }); } catch {}
+              this.highlight(targets, step.box === "multi" ? "multi" : "union");
+            } else {
+              this.nextStep();
+            }
+          }
+        }, 50);
+      } else {
+        try { targets[0].scrollIntoView({ block: "center", inline: "center" }); } catch {}
+        this.highlight(targets, step.box === "multi" ? "multi" : "union");
       }
-      target.scrollIntoView({ block: "center", inline: "center", behavior: "instant" });
     }
 
-    // UI表示
+
+    // UI
     this.showOverlay();
     this.showPopover(step.content, {
-        showSkip: true,
-        onNext: () => this.nextStep(),
-        onSkip: () => this.skip(),
+      showSkip: true,
+      onNext: () => this.nextStep(),
+      onSkip: () => this.skip(),
     });
 
-
-    if (target) this.highlight(target);
+    if (targets.length) this.highlight(targets, step.box === "multi" ? "multi" : "union");
 
     // 進行条件
     const adv = step.advance || { mode: "next" };
     switch (adv.mode) {
-      case "next":
-        // Nextボタンで進む（上のonNextで処理）
-        break;
-      case "click-cta":
-        // ポップオーバーの「はじめる/閉じる」で進行
-        break;
+      case "next": break;
+      case "click-cta": break;
       case "click": {
-        const el = document.querySelector(adv.selector || step.target);
+        const el = document.querySelector(adv.selector || (step.targets ? step.targets[0] : step.target));
         if (el) {
           const h = () => { el.removeEventListener("click", h); this.nextStep(); };
           el.addEventListener("click", h, { once: true });
@@ -133,7 +148,6 @@ class Tour {
         const h = () => { document.removeEventListener(adv.name, h); this.nextStep(); };
         document.addEventListener(adv.name, h, { once: true });
         this.cleanupFns.push(() => document.removeEventListener(adv.name, h));
-        // フォールバック：クリックでもOKにする指定があれば
         if (adv.fallbackClickSelector) {
           const el = document.querySelector(adv.fallbackClickSelector);
           if (el) {
@@ -150,7 +164,6 @@ class Tour {
         break;
       }
       case "either": {
-        // eventsのどれか or 指定時間 or クリックで進む
         let advanced = false;
         const done = () => { if (advanced) return; advanced = true; this.nextStep(); };
         if (adv.events) {
@@ -176,15 +189,10 @@ class Tour {
         break;
       }
       case "gate": {
-        // 1) Nextを無効化
+        // 今は見た目だけのロック/解除
         this.setGateEnabled(false);
         let unlocked = false;
-        const done = () => {
-          if (unlocked) return;
-          unlocked = true;
-          // 2) OK表示＆Next有効化（自動では進めない）
-          this.setGateEnabled(true);
-        };
+        const done = () => { if (unlocked) return; unlocked = true; this.setGateEnabled(true); };
         const cleanups = [];
         if (adv.events && adv.events.length) {
           adv.events.forEach(name => {
@@ -192,25 +200,23 @@ class Tour {
             document.addEventListener(name, h, { once: true });
             cleanups.push(() => document.removeEventListener(name, h));
           });
-          }
+        }
         if (adv.clickSelector) {
-           const el = document.querySelector(adv.clickSelector);
+          const el = document.querySelector(adv.clickSelector);
           if (el) {
             const hc = () => done();
-            el.addEventListener('click', hc, { once: true });
-            cleanups.push(() => el.removeEventListener('click', hc));
+            el.addEventListener("click", hc, { once: true });
+            cleanups.push(() => el.removeEventListener("click", hc));
           }
         }
-        const cleanup = () => cleanups.splice(0).forEach(fn => { try{fn()}catch{} });
-        this.cleanupFns.push(cleanup);
+        this.cleanupFns.push(() => cleanups.splice(0).forEach(fn => { try{fn()}catch{} }));
         break;
       }
     }
   }
 
-  // ========== UI ==========
+  // ===== UI =====
   buildUI() {
-    // スクロールロック
     document.documentElement.dataset.tourScroll = "locked";
     document.body.style.overflow = "hidden";
 
@@ -218,38 +224,45 @@ class Tour {
     this.overlay.className = "tour-overlay";
     document.body.appendChild(this.overlay);
 
+    this.dimmer = document.createElement("div");
+    this.dimmer.className = "tour-dimmer";
+    document.body.appendChild(this.dimmer);
+
     this.pop = document.createElement("div");
     this.pop.className = "tour-popover";
     this.pop.innerHTML = `
       <div class="tour-popover__title"></div>
       <div class="tour-popover__body"></div>
       <div class="tour-popover__actions">
-        <button data-act="prev" disabled>戻る</button>
+        <button data-act="prev" disabled>前へ</button>
         <button data-act="next">次へ</button>
-        <button data-act="skip" aria-label="スキップ">スキップ</button>
+        <button data-act="skip" aria-label="スキップ">終了</button>
       </div>`;
     document.body.appendChild(this.pop);
 
-    this.outline = document.createElement("div");
-    this.outline.className = "tour-outline";
-    document.body.appendChild(this.outline);
+    this.outlineLayer = document.createElement("div");
+    this.outlineLayer.className = "tour-outline-layer";
+    document.body.appendChild(this.outlineLayer);
+    this.outlines = [];
   }
 
   teardownUI() {
     document.body.style.overflow = "";
     this.overlay?.remove();
+    this.dimmer?.remove();
     this.pop?.remove();
-    this.outline?.remove();
-    this.overlay = this.pop = this.outline = null;
+    this.outlineLayer?.remove();
+    this.overlay = this.dimmer = this.pop = this.outlineLayer = null;
   }
 
   showOverlay() {
-    this.overlay.style.display = "block";
+    if (this.overlay) this.overlay.style.display = "block";
   }
 
   showPopover(content, { showSkip, onNext, onSkip }) {
     this.pop.querySelector(".tour-popover__title").textContent = content?.title || "";
     this.pop.querySelector(".tour-popover__body").textContent  = content?.body || "";
+
     const btnPrev = this.pop.querySelector('button[data-act="prev"]');
     const btnNext = this.pop.querySelector('button[data-act="next"]');
     const btnSkip = this.pop.querySelector('button[data-act="skip"]');
@@ -257,7 +270,6 @@ class Tour {
     btnNext.onclick = onNext;
     btnSkip.onclick = onSkip;
 
-    // ← Prevの活性/無効化＋クリック動作
     if (this.canPrev()) {
       btnPrev.disabled = false;
       btnPrev.onclick = () => this.prevStep();
@@ -267,34 +279,146 @@ class Tour {
     }
 
     btnSkip.style.display = showSkip ? "" : "none";
-    // 位置（モバイルは下固定）
+
     this.pop.style.position = "fixed";
     this.pop.style.bottom = "16px";
     this.pop.style.left   = "50%";
     this.pop.style.transform = "translateX(-50%)";
   }
 
-  highlight(target) {
-    const rect = target.getBoundingClientRect();
-    Object.assign(this.outline.style, {
+  // 複数要素の外接矩形
+  unionRect(els) {
+    let top = Infinity, left = Infinity, right = -Infinity, bottom = -Infinity;
+    els.forEach(el => {
+      const r = el.getBoundingClientRect();
+      top    = Math.min(top, r.top);
+      left   = Math.min(left, r.left);
+      right  = Math.max(right, r.right);
+      bottom = Math.max(bottom, r.bottom);
+    });
+    return { top, left, width: right - left, height: bottom - top };
+  }
+
+  positionOutlineEl(el, rect, pad = 8) {
+    Object.assign(el.style, {
       display: "block",
       position: "fixed",
-      top: `${rect.top - 8}px`,
-      left:`${rect.left - 8}px`,
-      width: `${rect.width + 16}px`,
-      height:`${rect.height + 16}px`,
+      top: `${rect.top - pad}px`,
+      left:`${rect.left - pad}px`,
+      width: `${rect.width + pad*2}px`,
+      height:`${rect.height + pad*2}px`,
       border: "3px solid #22c55e",
       borderRadius: "12px",
       zIndex: 10001,
-      pointerEvents: "none",
-      boxShadow: "0 0 0 9999px rgba(0,0,0,.5)"
+      pointerEvents: "none"
     });
   }
 
+  // mode: "union" | "multi"
+  highlight(targetOrArray, mode = "union") {
+    const els = Array.isArray(targetOrArray) ? targetOrArray : [targetOrArray];
+
+    // 既存枠クリア
+    if (this.outlineLayer) this.outlineLayer.innerHTML = "";
+    this.outlines = [];
+
+    if (mode === "multi") {
+      // 各ターゲットに枠
+      this.outlines = els.map(el => {
+        const box = document.createElement("div");
+        box.className = "tour-outline";
+        this.outlineLayer.appendChild(box);
+        this.positionOutlineEl(box, el.getBoundingClientRect());
+        return box;
+      });
+      // 暗幕に複数の穴
+      this.setDimmerHoles(this.getRects(els));
+
+      const apply = () => {
+        const rects = this.getRects(els);
+        this.outlines.forEach((box, i) => this.positionOutlineEl(box, rects[i]));
+        this.setDimmerHoles(rects);
+      };
+      const onScroll = () => apply();
+      const onResize = () => apply();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onResize);
+      this.cleanupFns.push(() => {
+        window.removeEventListener("scroll", onScroll);
+        window.removeEventListener("resize", onResize);
+      });
+
+    } else {
+      // 1枠でまとめる
+      const rect = this.unionRect(els);
+      const box = document.createElement("div");
+      box.className = "tour-outline";
+      this.outlineLayer.appendChild(box);
+      this.positionOutlineEl(box, rect);
+      this.setDimmerHoles([rect]);
+
+      const apply = () => {
+        const r = this.unionRect(els);
+        this.positionOutlineEl(box, r);
+        this.setDimmerHoles([r]);
+      };
+      const onScroll = () => apply();
+      const onResize = () => apply();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onResize);
+      this.cleanupFns.push(() => {
+        window.removeEventListener("scroll", onScroll);
+        window.removeEventListener("resize", onResize);
+      });
+    }
+  }
+
+  setDimmerHoles(rects, pad = 8) {
+    if (!this.dimmer) return;
+    const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+    const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+    const holes = rects.map(r => {
+      const x = Math.max(0, r.left - pad);
+      const y = Math.max(0, r.top  - pad);
+      const w = Math.max(0, r.width  + pad*2);
+      const h = Math.max(0, r.height + pad*2);
+      const rx = 12;
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" ry="${rx}" fill="black"/>`;
+    }).join("");
+
+    const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${vw}" height="${vh}" viewBox="0 0 ${vw} ${vh}">
+  <defs>
+    <mask id="tour-mask" maskUnits="userSpaceOnUse">
+      <rect width="100%" height="100%" fill="white"/>
+      ${holes}
+    </mask>
+  </defs>
+  <rect width="100%" height="100%" fill="white" mask="url(#tour-mask)"/>
+</svg>`.trim();
+
+    const url = `url('data:image/svg+xml;utf8,${encodeURIComponent(svg)}')`;
+    this.dimmer.style.webkitMaskImage = url;
+    this.dimmer.style.maskImage = url;
+    this.dimmer.style.webkitMaskRepeat = "no-repeat";
+    this.dimmer.style.maskRepeat = "no-repeat";
+    this.dimmer.style.webkitMaskSize = "100% 100%";
+    this.dimmer.style.maskSize = "100% 100%";
+  }
+
+  getRects(els) {
+    return els.map(el => el.getBoundingClientRect());
+  }
+
   clearStep() {
-    // 前ステップの後片付け
     this.cleanupFns.splice(0).forEach(fn => { try { fn(); } catch {} });
-    if (this.outline) this.outline.style.display = "none";
+    if (this.outlineLayer) this.outlineLayer.innerHTML = "";
+    this.outlines = [];
+    if (this.dimmer) {
+      this.dimmer.style.webkitMaskImage = "";
+      this.dimmer.style.maskImage = "";
+    }
   }
 
   isVisible(el) {
@@ -306,25 +430,26 @@ class Tour {
     if (!this.active) return;
     if (e.key === "Escape") this.end();
     if (e.key === "Enter" || e.key === "ArrowRight") this.nextStep();
+    if (e.key === "ArrowLeft") this.prevStep();
+  }
+
+  // gateの見た目制御（今はダミー）
+  setGateEnabled(enabled) {
+    const nextBtn = this.pop?.querySelector('button[data-act="next"]');
+    if (nextBtn) {
+      nextBtn.disabled = !enabled;
+      nextBtn.style.opacity = enabled ? "1" : ".6";
+      nextBtn.style.cursor = enabled ? "pointer" : "not-allowed";
+    }
   }
 }
 
-// 末尾（exportあたり）を差し替え
-const TourInstance = new Tour();   // ← インスタンス名を変える
-export { TourInstance };           // ← 必要ならモジュールとしても使える
-
-// グローバル公開（コンソールや他スクリプトから使う用）
+// --- export & global ---
+const TourInstance = new Tour();
+export { TourInstance };
 window.Tour = TourInstance;
 
+// 自動起動したい場合だけ（不要なら消してOK）
 window.addEventListener("DOMContentLoaded", () => {
-  setTimeout(() => window.Tour.start("intro"), 300); // ←常に起動
+  setTimeout(() => window.Tour.start("intro"), 300);
 });
-
-
-
-// 右上にヘルプボタンを付けたい場合（任意）
-// const help = document.createElement('button');
-// help.textContent = "?";
-// Object.assign(help.style, { position:'fixed', right:'12px', top:'12px', zIndex:10002 });
-// help.onclick = () => Tour.start();
-// document.body.appendChild(help);

@@ -40,7 +40,7 @@ export const GUIDE = {
           type: "spotlight",
           targets: ["main#stage canvas", "#ctrl-mode-paint"],
           box: "multi",
-          content: { title: "線を描こう", body: "キャンバス上をドラッグ。必要なら「絵の具を塗る」を選択。" },
+          content: { title: "線を描こう", body: "「絵の具を塗る」を選択し、キャンバス上をドラッグすると線を描けます。" },
           advance: { mode: "next" }
         }
       ]
@@ -54,16 +54,16 @@ export const GUIDE = {
           type: "spotlight",
           targets: ["main#stage canvas", "#ctrl-mode-fluid"],
           box: "multi",
-          content: { title: "流してみよう", body: "このボタンで再生/停止を切り替えます。" },
+          content: { title: "流してみよう", body: "このボタンを押すと、流体の動きを表現することができます。" },
           advance: { mode: "next" }
         },
-        {
-          id: "splat",
-          type: "spotlight",
-          target: "#ctrl-random-splat",
-          content: { title: "滴を落とす", body: "ランダムに絵の具を落とします。" },
-          advance: { mode: "event", name: "fluid:splat" }
-        }
+//        {
+//          id: "splat",
+//          type: "spotlight",
+//          target: "#ctrl-random-splat",
+//          content: { title: "滴を落とす", body: "ランダムに絵の具を落とします。" },
+//          advance: { mode: "event", name: "fluid:splat" }
+//        }
       ]
     },
     {
@@ -80,9 +80,10 @@ export const GUIDE = {
         {
           id: "done",
           type: "modal",
+          target: "#help-btn",
           content: {
             title: "完了！",
-            body: "おつかれさま。右上の「?」からいつでもチュートリアルを開けます。"
+            body: "では作品を制作しましょう。左上の「?」からいつでもチュートリアルを開けます。"
           },
           cta: { primary: "閉じる" },
           advance: { mode: "click-cta" }

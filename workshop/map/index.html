@@ -10,16 +10,16 @@
   window.WS_STEP = {
     index: 2,
     total: 6,
-    title: '対象区域の選定',
+    title: '対象地点/区域の選定',
     mission: {
-      purpose: '自分たちの作品の題材となる地域を決めよう。',
+      purpose: '自分たちの作品の題材となる地点/区域を決めよう。',
       steps: [
-        '「ハザードマップ」から興味のある災害種別を選択し、<strong>港北区内</strong>で対象地点を地図上で確認する。',
+        '「ハザードマップ」から災害種別を選択し、<strong>港北区内</strong>で対象地点/区域を地図上で確認する。',
         '決めた場所を右上の<strong>「ワークシート」</strong>に記録する。'
       ],
       goal: '場所を選び、<strong>「ワークシート」設問1、2、3</strong>に記録できたら完了です。'
     },
-    next: '../marbling/index.html',
+    next: '/bo-sci-2025-10/workshop/marbling/index.html',
     surveyUrl: 'https://survey123.arcgis.com/share/cff62fc5070c4f468b2c9269d5b2535f',
     surveyHint: '今回の入力：設問3（使ったハザード）・設問4（地点/区域）',
     gateKey: 'gate:step2',
@@ -36,7 +36,7 @@
   };
 </script>
 
-<link rel="stylesheet" href="../common/styles.css" />
+<link rel="stylesheet" href="/bo-sci-2025-10/workshop/common/styles.css" />
 <style>
   main.stage { padding: 0; }
   .frame-wrap {
@@ -57,12 +57,12 @@
   <div class="frame-wrap">
     <!-- 既存の地図アプリ or 下のサンプルを読み込み -->
     <iframe
-      src="./app/index.html"
+      src="/bo-sci-2025-10/workshop/map/app/index.html"
       allow="fullscreen"
       referrerpolicy="no-referrer-when-downgrade">
     </iframe>
   </div>
 </main>
-<script src="../common/nav.js"></script>
+<script src="/bo-sci-2025-10/workshop/common/nav.js"></script>
 </body>
 </html>

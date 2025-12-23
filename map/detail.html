@@ -12,6 +12,17 @@
 
   <div class="page-container">
     <h1 class="instruction-title highlight-title"></h1>
+    <div class="button-wrapper">
+      <button id="back-to-top-button" class="nav-button btn-secondary">← トップに戻る</button>
+      <div class="progress-bar-container">
+        <div class="progress-step active" data-step="1">1. 危険</div>
+        <div class="progress-step" data-step="2">2. 防災行動</div>
+        <div class="progress-step" data-step="3">3. 作者の想い</div>
+        <div class="progress-step" data-step="4">4. 周辺の作品</div>
+    </div>
+        
+    <button id="next-button" class="nav-button btn-primary">次へ →</button>
+    </div>
     <div class="content-container">  
         <div class="column left-column">
           <div id="artwork-info" class="artwork-info"></div>
@@ -20,36 +31,26 @@
           </div>
         </div>
         <div class="column right-column">
-        <div class="map-panel">
-          <div id="surrounding-map"></div>
-          <div id="filter-widget">
-          </div>
-        </div>
+
           <div class="interaction-panel">
-            <div class="map-guide-panel">
-              <div class="step-guide">
-                <p>💡 次のステップに進むには<br>
-                右上の『表示するハザードマップ』 のチェックをすべて押して、危険を確認しましょう。
+            <div class="panel-column-right">
+              <p>アート作品は、<b>背景の表現（マーブリング）</b>で「危険」を表現しています。</p>
+              <div class="guide-task-prompt">
+                <p>青く光る枠の中の◻︎を押してハザードマップを表示し、ピンの周辺にどのような危険があるか探してみましょう。<br>
+                  <span style="font-size: 0.9em; color: #555;">※すべてのハザードマップを表示すると次に進めます。</span>
                 </p>
               </div>
-              <h4>ハザードマップって何？</h4>
-              <p>ハザードマップは、もし大きな災害が起きたら『どんな危険が起こるか』を教えてくれる『<b>未来の危険予報図</b>』です。</p>
-              <p id="hazard-type-intro">このアート作品は、この予報図に示された危険をテーマに作られています。</p>
-              <hr>
-              <h4>地図の「色」と「凡例」の見方</h4>
-              <p>地図では、<b>色が濃いほど危険が大きい</b>ことを示しています。下の『凡例』と見比べて、作品の周りが何色になっているか見てみましょう。</p>
-              <div id="legend-container"></div>
             </div>
           </div>
 
-          <div class="button-wrapper">
-            <button id="back-to-top-button" class="nav-button btn-secondary">トップに戻る</button>
-            <button id="next-button" class="nav-button btn-primary">次へ→</button>
+          <div class="map-panel">
+            <div id="surrounding-map"></div>
+            <div id="filter-widget"></div>
           </div>
         </div>
       </div>
-
-  </div> 
+    </div>
+  </div>
 
   <script src="https://js.arcgis.com/4.29/"></script>
   <script src="detail_script.js"></script>

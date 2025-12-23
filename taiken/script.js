@@ -77,12 +77,85 @@ pointers.push(new pointerPrototype());
 
 const { gl, ext } = getWebGLContext(canvas);
 
-if (isMobile()) {
-    config.DYE_RESOLUTION = 512;
+chooseResolutions(gl, ext, config);
+
+
+// URL パラメータ取得の小ヘルパ
+function getQueryFlag(name) {
+  return new URLSearchParams(location.search).has(name);
 }
-if (!ext.supportLinearFiltering) {
-    config.DYE_RESOLUTION = 512;
+
+/**
+ * 端末能力と実行条件に応じて解像度を自動選択
+ * - ベースは DYE=1024, SIM=256
+ * - モバイルや能力不足では 512/128 → 256/64 へ段階的にフォールバック
+ * - ?hires=1 が付与されている場合はフォールバック無効（強制高解像度）
+ */
+function chooseResolutions(gl, ext, config) {
+  const FORCE_HIRES = getQueryFlag('hires'); // 例: ...?hires=1
+
+  // 1) まず端末ハード制約を確認
+  const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE) || 4096;
+  const maxRb  = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) || 4096;
+
+  // 候補(上→下に安全) : [DYE, SIM]
+  const ladder = [
+    [1024, 256],
+    [ 512, 128],
+    [ 256,  64],
+  ];
+
+  // MANUAL_FILTERING になる環境（線形補間不可）はDYEを下げる方が安定
+  const linOK = !!ext.supportLinearFiltering;
+
+  // 2) まずハード制約でフィルタ
+  const fitsHW = ([dye, sim]) =>
+    dye <= maxTex && sim <= maxTex && dye <= maxRb && sim <= maxRb;
+
+  let picked = ladder.find(([d, s]) => fitsHW([d, s])) || ladder[ladder.length - 1];
+
+  // 3) モバイルは一段下げを基本（ただし ?hires=1 なら据え置き）
+  if (!FORCE_HIRES && isMobile()) {
+    const idx = Math.max(ladder.findIndex(([d, s]) => d === picked[0] && s === picked[1]), 0);
+    picked = ladder[Math.min(idx + 1, ladder.length - 1)];
+  }
+
+  // 4) 線形補間なしは更に一段下げると安定（?hires=1 なら据え置き）
+  if (!FORCE_HIRES && !linOK) {
+    const idx = Math.max(ladder.findIndex(([d, s]) => d === picked[0] && s === picked[1]), 0);
+    picked = ladder[Math.min(idx + 1, ladder.length - 1)];
+  }
+
+  // 5) 一旦セット
+  config.DYE_RESOLUTION = picked[0];
+  config.SIM_RESOLUTION = picked[1];
 }
+
+/**
+ * 軽い計測で負荷が高そうなら更にダウングレード（任意/簡易）
+ * - 直近フレーム dt を見て 30fps 相当より遅ければ一段下げる
+ * - 既に最下段なら何もしない
+ */
+function maybeDowngradeOnPerf(config) {
+  // しきい値: 1フレーム33ms相当
+  const SLOW_DT = 1.0 / 30.0;
+  const ladder = [
+    [1024, 256],
+    [ 512, 128],
+    [ 256,  64],
+  ];
+
+  const idx = ladder.findIndex(([d, s]) => d === config.DYE_RESOLUTION && s === config.SIM_RESOLUTION);
+  if (idx < 0 || idx === ladder.length - 1) return; // 未特定 or もう最下段
+
+  if (avgDt > SLOW_DT) { // avgDt は下で更新
+    const next = ladder[idx + 1];
+    config.DYE_RESOLUTION = next[0];
+    config.SIM_RESOLUTION = next[1];
+    initFramebuffers();
+  }
+}
+
 
 // startGUI();
 setupDomControls();
@@ -92,152 +165,206 @@ function startGUI () {
 }
 
 function setupDomControls() {
-    // 解像度
-    const dyeRes = document.getElementById('ctrl-dye-res');
-    const simRes = document.getElementById('ctrl-sim-res');
-    dyeRes.value = config.DYE_RESOLUTION;
-    simRes.value = config.SIM_RESOLUTION;
-    dyeRes.addEventListener('change', e => {
-        config.DYE_RESOLUTION = parseInt(dyeRes.value);
-        initFramebuffers();
-    });
-    simRes.addEventListener('change', e => {
-        config.SIM_RESOLUTION = parseInt(simRes.value);
-        initFramebuffers();
-    });
+  // --- 2ボタンでモード切替 ---
+  const btnPaint = document.getElementById('ctrl-mode-paint'); // 「絵の具を塗る」
+  const btnFluid = document.getElementById('ctrl-mode-fluid'); // 「流体を動かす」
 
-    // 液体
-    const velDiss = document.getElementById('ctrl-vel-diss');
-    const pressure = document.getElementById('ctrl-pressure');
-    const curl = document.getElementById('ctrl-curl');
-    velDiss.value = config.VELOCITY_DISSIPATION;
-    pressure.value = config.PRESSURE;
-    curl.value = config.CURL;
-    velDiss.addEventListener('input', e => {
-        config.VELOCITY_DISSIPATION = parseFloat(velDiss.value);
-    });
-    pressure.addEventListener('input', e => {
-        config.PRESSURE = parseFloat(pressure.value);
-    });
-    curl.addEventListener('input', e => {
-        config.CURL = parseFloat(curl.value);
-    });
-
-    // 描画・操作
-    const paintToggle = document.getElementById('ctrl-paint-toggle');
-    function updatePaintButton() {
-        paintToggle.textContent = config.PAUSED ? '絵の具を塗る' : '流体を動かす';
+  function updateModeButtons() {
+    const paintActive = !!config.PAUSED; // PAUSED=true => 塗るモード
+    if (btnPaint) {
+      btnPaint.classList.toggle('is-active', paintActive);
+      btnPaint.setAttribute('aria-pressed', paintActive ? 'true' : 'false');
     }
-    updatePaintButton();
-    paintToggle.addEventListener('click', e => {
-        config.PAUSED = !config.PAUSED;
-        updatePaintButton();
-        // 追加：状態に応じてイベントを投げる
-  document.dispatchEvent(new CustomEvent(config.PAUSED ? 'fluid:pause' : 'fluid:play'));
-    });
-    const brush = document.getElementById('ctrl-brush');
+    if (btnFluid) {
+      btnFluid.classList.toggle('is-active', !paintActive);
+      btnFluid.setAttribute('aria-pressed', !paintActive ? 'true' : 'false');
+    }
+  }
+  function setMode(paintMode) {
+    const prev = config.PAUSED;
+    config.PAUSED = !!paintMode;
+    updateModeButtons();
+    if (prev !== config.PAUSED) {
+      document.dispatchEvent(new CustomEvent(config.PAUSED ? 'fluid:pause' : 'fluid:play'));
+    }
+  }
+  if (btnPaint) btnPaint.addEventListener('click', () => setMode(true));
+  if (btnFluid) btnFluid.addEventListener('click', () => setMode(false));
+  updateModeButtons(); // 初期反映
+
+  // --- ブラシ ---
+  const brush = document.getElementById('ctrl-brush');
+  if (brush) {
     brush.value = config.SPLAT_RADIUS;
-    brush.addEventListener('input', e => {
-        config.SPLAT_RADIUS = parseFloat(brush.value);
+    brush.addEventListener('input', () => {
+      config.SPLAT_RADIUS = parseFloat(brush.value);
     });
-    const foreColor = document.getElementById('ctrl-fore-color');
-    function rgbToHex(r,g,b) {
-        return '#' + [r,g,b].map(x => {
-            const v = Math.max(0, Math.min(255, Math.round(Number(x))));
-            return v.toString(16).padStart(2,'0');
-        }).join('');
-    }
-    function hexToRgb(hex) {
-        // hex: "#RRGGBB" or "RRGGBB"
-        const s = hex.replace('#','').trim();
-        if (s.length !== 6) return null;
-        const r = parseInt(s.slice(0,2), 16);
-        const g = parseInt(s.slice(2,4), 16);
-        const b = parseInt(s.slice(4,6), 16);
-        if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return null;
-        return { r, g, b };
-    }
-    foreColor.value = rgbToHex(config.FORE_COLOR.r, config.FORE_COLOR.g, config.FORE_COLOR.b);
-    foreColor.addEventListener('input', e => {
-        const parsed = hexToRgb(foreColor.value);
-        if (parsed) {
-            // config.FORE_COLOR は 0–255 のまま保持（foreColor() 内で normalize する前提）
-            config.FORE_COLOR = parsed;
-            document.dispatchEvent(new CustomEvent('color:change')); // ← これを追加
+  }
+
+  // --- 色 ---
+  const foreColorInput = document.getElementById('ctrl-fore-color');
+  function rgbToHex(r,g,b) {
+    return '#' + [r,g,b].map(x => {
+      const v = Math.max(0, Math.min(255, Math.round(Number(x))));
+      return v.toString(16).padStart(2,'0');
+    }).join('');
+  }
+  function hexToRgb(hex) {
+    const s = hex.replace('#','').trim();
+    if (s.length !== 6) return null;
+    const r = parseInt(s.slice(0,2), 16);
+    const g = parseInt(s.slice(2,4), 16);
+    const b = parseInt(s.slice(4,6), 16);
+    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return null;
+    return { r, g, b };
+  }
+  if (foreColorInput) {
+    // 初期同期
+    foreColorInput.value = rgbToHex(config.FORE_COLOR.r, config.FORE_COLOR.g, config.FORE_COLOR.b);
+    foreColorInput.addEventListener('input', () => {
+      const parsed = hexToRgb(foreColorInput.value);
+      if (parsed) {
+        config.FORE_COLOR = parsed;
+        localStorage.setItem('lastColorHex', foreColorInput.value);
+        if (PALETTES[paletteName].includes(foreColorInput.value)) {
+          updateSwatchActive(foreColorInput.value);
+        } else {
+          updateSwatchActive(null);
         }
+        document.dispatchEvent(new CustomEvent('color:change'));
+      }
     });
+  }
 
-    // --- フィルターUI ---
-    const sketchBtn = document.getElementById('ctrl-filter-sketch');
-    const sketchParams = document.getElementById('ctrl-filter-sketch-params');
-    function updateSketchBtn() {
-        sketchBtn.textContent = config.FILTERS.sketch.enabled ? 'スケッチ風（ON）' : 'スケッチ風';
-        sketchParams.style.display = config.FILTERS.sketch.enabled ? '' : 'none';
-    }
-    updateSketchBtn();
-    sketchBtn.addEventListener('click', () => {
-        config.FILTERS.sketch.enabled = !config.FILTERS.sketch.enabled;
-        if (config.FILTERS.sketch.enabled) config.PAUSED = true;
-        updateSketchBtn();
-    });
-    // パラメータ
-    const edgeStrength = document.getElementById('ctrl-edge-strength');
-    const edgeThreshold = document.getElementById('ctrl-edge-threshold');
-    const levels = document.getElementById('ctrl-levels');
-    const saturation = document.getElementById('ctrl-saturation');
-    edgeStrength.value = config.FILTERS.sketch.edgeStrength;
-    edgeThreshold.value = config.FILTERS.sketch.edgeThreshold;
-    levels.value = config.FILTERS.sketch.levels;
-    saturation.value = config.FILTERS.sketch.saturation;
-    edgeStrength.addEventListener('input', () => {
-        config.FILTERS.sketch.edgeStrength = parseFloat(edgeStrength.value);
-    });
-    edgeThreshold.addEventListener('input', () => {
-        config.FILTERS.sketch.edgeThreshold = parseFloat(edgeThreshold.value);
-    });
-    levels.addEventListener('input', () => {
-        config.FILTERS.sketch.levels = parseInt(levels.value);
-    });
-    saturation.addEventListener('input', () => {
-        config.FILTERS.sketch.saturation = parseFloat(saturation.value);
-    });
+  // --- パレット（既存DOMを使う） ---
+  const PALETTES = {
+    Basic: ['#FF3B30','#FF9500','#FFCC00','#34C759','#007AFF','#5856D6','#FF2D55'],
+    Pastel: ['#FFD1DC','#B5EAD7','#C7CEEA','#FFDAC1','#E2F0CB','#B5B9FF','#FFB7B2','#FF9CEE','#B28DFF'],
+    Warm:   ['#FF3B30','#FF9500','#FFCC00','#FFB7B2','#FFD1DC','#FF9CEE','#FFDAC1','#FF2D55','#FF5E3A'],
+    Cool:   ['#007AFF','#34C759','#5856D6','#B5EAD7','#B5B9FF','#C7CEEA','#E2F0CB','#A0CED9','#5AC8FA']
+  };
+  const COLOR_NAMES = {
+    '#000000':'黒','#ffffff':'白','#FF3B30':'赤','#FF9500':'オレンジ','#FFCC00':'黄','#34C759':'緑','#007AFF':'青','#5856D6':'紫','#FF2D55':'ピンク',
+    '#FFD1DC':'パステルピンク','#B5EAD7':'パステルグリーン','#C7CEEA':'パステルブルー','#FFDAC1':'パステルオレンジ','#E2F0CB':'パステルイエロー','#B5B9FF':'パステルパープル','#FFB7B2':'パステルレッド','#FF9CEE':'パステルライトピンク','#B28DFF':'パステルバイオレット',
+    '#FF5E3A':'ライトオレンジ','#A0CED9':'ライトブルー','#5AC8FA':'ライトシアン'
+  };
 
-    // ユーティリティ
-    const randomSplat = document.getElementById('ctrl-random-splat');
-    randomSplat.addEventListener('click', e => {
-        splatStack.push(parseInt(Math.random()*20)+5);
-        document.dispatchEvent(new CustomEvent('fluid:splat'));    // ← 追加
-    });
-    const saveBtn = document.getElementById('ctrl-save');
-    saveBtn.addEventListener('click', e => {
-        captureScreenshot();
-        document.dispatchEvent(new CustomEvent('export:click'));  // ← 追加
-    });
+  const paletteSelect = document.getElementById('palette-select');
+  const swatchesList  = document.getElementById('swatches');
 
-      // --- ヘルプ（オンボーディング起動） ---
-    const helpBtn = document.getElementById('help-btn');
-    if (helpBtn) {
-        helpBtn.addEventListener('click', () => {
-            if (window.Tour && window.Tour.active) return;
-            // Tourが読み込み済みなら即起動
-            if (window.Tour && typeof window.Tour.start === 'function') {
-                window.Tour.start('intro');
-                return;
-            }
-            // まだ読み込まれてない場合のフォールバック（50ms*20=1秒だけ待つ）
-            let tries = 0;
-            const iv = setInterval(() => {
-                if (window.Tour && typeof window.Tour.start === 'function') {
-                clearInterval(iv);
-                window.Tour.start('intro');
-                } else if (++tries > 20) {
-                clearInterval(iv);
-                console.warn('Tour is not loaded yet.');
-            }
-        }, 50);
-        });
-    }
+  let paletteName  = localStorage.getItem('paletteName')  || 'Basic';
+  let lastColorHex = localStorage.getItem('lastColorHex') || null;
 
+  if (paletteSelect) paletteSelect.value = paletteName;
+
+  function renderSwatches(palette, selectedHex) {
+    if (!swatchesList) return;
+    swatchesList.innerHTML = '';
+    PALETTES[palette].forEach(hex => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'swatch';
+      btn.setAttribute('role','option');
+      btn.setAttribute('tabindex','0');
+      btn.setAttribute('aria-label', COLOR_NAMES[hex] || hex);
+      btn.setAttribute('data-color', hex);
+      btn.style.setProperty('--swatch-color', hex);
+      btn.setAttribute('aria-selected', selectedHex === hex ? 'true' : 'false');
+      if (selectedHex === hex) btn.classList.add('is-active');
+      btn.addEventListener('click', () => {
+        if (!foreColorInput) return;
+        foreColorInput.value = hex;
+        const rgb = hexToRgb(hex);
+        if (rgb) {
+          config.FORE_COLOR = rgb;
+          localStorage.setItem('lastColorHex', hex);
+          updateSwatchActive(hex);
+          document.dispatchEvent(new CustomEvent('color:change'));
+        }
+      });
+      btn.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault(); btn.nextElementSibling?.focus();
+        }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault(); btn.previousElementSibling?.focus();
+        }
+        if (e.key === 'Enter' || e.key === ' ') btn.click();
+      });
+      swatchesList.appendChild(btn);
+    });
+  }
+
+  function updateSwatchActive(hex) {
+    if (!swatchesList) return;
+    Array.from(swatchesList.children).forEach(btn => {
+      const btnHex = btn.getAttribute('data-color');
+      const active = (btnHex === hex);
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+  }
+
+  if (paletteSelect) {
+    paletteSelect.addEventListener('change', () => {
+      paletteName = paletteSelect.value;
+      localStorage.setItem('paletteName', paletteName);
+      let currentHex = foreColorInput ? foreColorInput.value : null;
+      if (!currentHex || !PALETTES[paletteName].includes(currentHex)) {
+        currentHex = PALETTES[paletteName][0];
+        if (foreColorInput) foreColorInput.value = currentHex;
+        const rgb = hexToRgb(currentHex);
+        if (rgb) config.FORE_COLOR = rgb;
+      }
+      renderSwatches(paletteName, currentHex);
+      updateSwatchActive(currentHex);
+      document.dispatchEvent(new CustomEvent('color:change'));
+    });
+  }
+
+  // 初期描画
+  if (foreColorInput) {
+    let initialHex = lastColorHex || foreColorInput.value || '#FF3B30';
+    if (!PALETTES[paletteName].includes(initialHex)) initialHex = PALETTES[paletteName][0];
+    foreColorInput.value = initialHex;
+    const rgb = hexToRgb(initialHex);
+    if (rgb) config.FORE_COLOR = rgb;
+    renderSwatches(paletteName, initialHex);
+    updateSwatchActive(initialHex);
+  }
+
+  // --- ヘルプ ---
+  const helpBtn = document.getElementById('help-btn');
+  if (helpBtn) {
+    helpBtn.addEventListener('click', () => {
+      if (window.Tour && window.Tour.active) return;
+      if (window.Tour && typeof window.Tour.start === 'function') {
+        window.Tour.start('intro'); return;
+      }
+      let tries = 0;
+      const iv = setInterval(() => {
+        if (window.Tour && typeof window.Tour.start === 'function') {
+          clearInterval(iv); window.Tour.start('intro');
+        } else if (++tries > 20) {
+          clearInterval(iv); console.warn('Tour is not loaded yet.');
+        }
+      }, 50);
+    });
+  }
+
+  // --- 保存 ---
+  const saveBtn = document.getElementById('ctrl-save');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      captureScreenshot();
+      document.dispatchEvent(new CustomEvent('export:click'));
+    });
+  }
+
+  document.getElementById('end-experience-btn').addEventListener('click', () => {
+    // ここでトップページに遷移（パスは必要に応じて修正）
+    window.location.href = '/bo-sci-2025-10/index.html';
+  });
 }
 
 function getWebGLContext (canvas) {
@@ -1165,6 +1292,11 @@ initFramebuffers();
 
 let lastUpdateTime = Date.now();
 let colorUpdateTimer = 0.0;
+
+// 追加: dt の移動平均（軽量）
+let avgDt = 1/60;
+const alphaDt = 0.1; // 平滑化の強さ
+
 update();
 
 function update () {
@@ -1422,22 +1554,39 @@ function correctRadius (radius) {
     return radius;
 }
 
+// ★キャンバス相対座標（CSS px）→ キャンバス内部座標（デバイス px）
+function canvasPointFromClientXY(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect(); // CSS px
+  const x_css = clientX - rect.left;
+  const y_css = clientY - rect.top;
+  const x = x_css * (canvas.width  / rect.width);
+  const y = y_css * (canvas.height / rect.height);
+  return { x, y };
+}
+
+function pointFromTouch(touch) {
+  return canvasPointFromClientXY(touch.clientX, touch.clientY);
+}
+
+function pointFromMouseEvent(e) {
+  return canvasPointFromClientXY(e.clientX, e.clientY);
+}
+
+
 canvas.addEventListener('mousedown', e => {
-    let posX = scaleByPixelRatio(e.offsetX);
-    let posY = scaleByPixelRatio(e.offsetY);
+    const { x: posX, y: posY } = pointFromMouseEvent(e);
     let pointer = pointers.find(p => p.id == -1);
-    if (pointer == null)
-        pointer = new pointerPrototype();
+    if (!pointer) pointer = new pointerPrototype();
     updatePointerDownData(pointer, -1, posX, posY);
 });
 
 canvas.addEventListener('mousemove', e => {
-    let pointer = pointers[0];
+    const pointer = pointers[0];
     if (!pointer.down) return;
-    let posX = scaleByPixelRatio(e.offsetX);
-    let posY = scaleByPixelRatio(e.offsetY);
+    const { x: posX, y: posY } = pointFromMouseEvent(e);
     updatePointerMoveData(pointer, posX, posY);
 });
+
 
 window.addEventListener('mouseup', () => {
     updatePointerUpData(pointers[0]);
@@ -1446,26 +1595,24 @@ window.addEventListener('mouseup', () => {
 canvas.addEventListener('touchstart', e => {
     e.preventDefault();
     const touches = e.targetTouches;
-    while (touches.length >= pointers.length)
-        pointers.push(new pointerPrototype());
+    while (touches.length >= pointers.length) pointers.push(new pointerPrototype());
     for (let i = 0; i < touches.length; i++) {
-        let posX = scaleByPixelRatio(touches[i].pageX);
-        let posY = scaleByPixelRatio(touches[i].pageY);
+        const { x: posX, y: posY } = pointFromTouch(touches[i]);
         updatePointerDownData(pointers[i + 1], touches[i].identifier, posX, posY);
     }
-});
+}, { passive: false });
 
 canvas.addEventListener('touchmove', e => {
     e.preventDefault();
     const touches = e.targetTouches;
     for (let i = 0; i < touches.length; i++) {
-        let pointer = pointers[i + 1];
+        const pointer = pointers[i + 1];
         if (!pointer.down) continue;
-        let posX = scaleByPixelRatio(touches[i].pageX);
-        let posY = scaleByPixelRatio(touches[i].pageY);
+        const { x: posX, y: posY } = pointFromTouch(touches[i]);
         updatePointerMoveData(pointer, posX, posY);
     }
-}, false);
+}, { passive: false });
+
 
 window.addEventListener('touchend', e => {
     const touches = e.changedTouches;

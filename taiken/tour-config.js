@@ -24,7 +24,7 @@ export const GUIDE = {
         {
           id: "pick-color",
           type: "spotlight",
-          target: "#ctrl-fore-color",
+          targets: ["#ctrl-fore-color", "#ctrl-palette"],  
           content: { title: "色を選ぼう", body: "ここで色を選びます。" },
           advance: { mode: "event", name: "color:change", fallbackClickSelector: "#ctrl-fore-color" }
         },
@@ -38,8 +38,9 @@ export const GUIDE = {
         {
           id: "stroke",
           type: "spotlight",
-          target: "main#stage canvas",
-          content: { title: "線を描こう", body: "キャンバス上をドラッグして1本描きます。" },
+          targets: ["main#stage canvas", "#ctrl-mode-paint"],
+          box: "multi",
+          content: { title: "線を描こう", body: "「絵の具を塗る」を選択し、キャンバス上をドラッグすると線を描けます。" },
           advance: { mode: "next" }
         }
       ]
@@ -51,8 +52,9 @@ export const GUIDE = {
         {
           id: "play",
           type: "spotlight",
-          target: "#ctrl-paint-toggle",
-          content: { title: "流してみよう", body: "このボタンで再生/停止を切り替えます。" },
+          targets: ["main#stage canvas", "#ctrl-mode-fluid"],
+          box: "multi",
+          content: { title: "流してみよう", body: "このボタンを押すと、流体の動きを表現することができます。" },
           advance: { mode: "next" }
         },
         {
@@ -78,9 +80,10 @@ export const GUIDE = {
         {
           id: "done",
           type: "modal",
+          target:"#help-btn", 
           content: {
             title: "完了！",
-            body: "おつかれさま。左上の「?」からいつでもチュートリアルを開けます。"
+            body: "おつかれさまです。左上の「?」からいつでもチュートリアルを開けます。"
           },
           cta: { primary: "閉じる" },
           advance: { mode: "click-cta" }

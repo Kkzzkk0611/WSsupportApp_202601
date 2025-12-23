@@ -6,14 +6,16 @@ const stageWrap = document.getElementById('stageWrap');
 let cssW = canvas.clientWidth, cssH = canvas.clientHeight;
 
 function resizeCanvasToCSS() {
-  const rect = (stageWrap || canvas).getBoundingClientRect(); // ← wrap基準
-  dpr = Math.max(1, window.devicePixelRatio || 1);            // ← 毎回更新
+  // ★ここを canvas に固定：座標計算(clientToCanvas)と完全一致させる
+  const rect = canvas.getBoundingClientRect();
+  dpr = Math.max(1, window.devicePixelRatio || 1);
   cssW = rect.width; cssH = rect.height;
   canvas.width  = Math.round(cssW * dpr);
   canvas.height = Math.round(cssH * dpr);
   ctx.setTransform(1,0,0,1,0,0);
   ctx.scale(dpr, dpr);  // 以降はCSSピクセルで描画
 }
+
 resizeCanvasToCSS();
 window.addEventListener('resize', () => { resizeCanvasToCSS(); computeContain(); render(); });
 window.addEventListener('orientationchange', () => { resizeCanvasToCSS(); computeContain(); render(); });
@@ -779,7 +781,7 @@ if (clearBtn) {
 }
 
 // === PNGスタンプの定義（asset/stamps 配下） ===
-const STAMP_BASE = './asset/stamps/';
+const STAMP_BASE = '/bo-sci-2025-10/workshop/collage/app/asset/stamps/';
 // ここにファイル名（拡張子なし）を並べるだけでOK
 const STAMP_NAMES = [
   'ashiato_white',

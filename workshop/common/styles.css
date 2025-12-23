@@ -224,3 +224,56 @@ main.stage { min-height: calc(100dvh - 56px); padding:16px; }
 .ws-timer.is-danger .ws-timer__badge{ background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
 .timerbar.is-warn{ background: linear-gradient(90deg,#f59e0b,#ef4444); }
 .timerbar.is-danger{ background: #ef4444; }
+
+
+/* === パネルのレイアウト（モーダル全体） === */
+.ws-panel {
+  position: fixed;
+  inset: 0;                  /* top/right/bottom/left:0 と同じ */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;             /* 画面端の余白 */
+  background: rgba(0,0,0,.35);
+  z-index: 1000;
+}
+
+/* カード本体（最大高さを作って、中身を縦flex） */
+.ws-panel__card {
+  width: min(960px, 92vw);
+  max-height: 92vh;          /* ★ ここで高さ上限を作る */
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+  display: flex;
+  flex-direction: column;    /* ヘッダー／本文／フッターを縦に並べる */
+  overflow: hidden;          /* 角丸からはみ出さないように */
+}
+
+/* 固定ヘッダー＆フッター。本文との境界も見やすく */
+.ws-panel__head {
+  padding: 14px 18px;
+  border-bottom: 1px solid #eef0f3;
+  flex: 0 0 auto;
+}
+.ws-panel__foot {
+  padding: 12px 18px;
+  border-top: 1px solid #eef0f3;
+  flex: 0 0 auto;
+}
+
+/* ★ スクロールする本文エリア */
+.ws-panel__body {
+  padding: 16px 18px;
+  flex: 1 1 auto;            /* 余白分を全て本文に渡す */
+  overflow: auto;            /* ← これで本文だけスクロール */
+  -webkit-overflow-scrolling: touch; /* iOS慣性スクロール */
+  overscroll-behavior: contain;      /* バウンスで背面が動かないように */
+}
+
+/* パネル表示中は背面のページをスクロールさせない */
+html.body-lock, body.body-lock { overflow: hidden; }
+
+/* チップ等が横に長い場合の折返し */
+.ws-panel__body .chip { white-space: nowrap; }
+.ws-panel__body p, .ws-panel__body li { overflow-wrap: anywhere; }

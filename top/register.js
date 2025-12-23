@@ -84,7 +84,7 @@ document
       popup.style.display = "flex";
       popup.addEventListener("click", () => {
         popup.style.display = "none";
-        window.location.href = "/top/top.html";
+        window.location.href = "/bo-sci-2025-10/index.html";
       });
     } catch (err) {
       console.error("登録エラー:", err);
