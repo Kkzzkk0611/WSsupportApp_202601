@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log | コラージュ作品の記録</title>
+    <link rel="stylesheet" href="log_collage_styles.css">
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="container">
+        
+        <!-- Header -->
+        <header class="page-header">
+            <div class="step-indicator">STEP 3 / 4</div>
+            <h1 class="page-title">コラージュ作品の記録</h1>
+            <p class="page-subtitle">コラージュで表現した防災行動やメッセージを記録します。</p>
+            <p class="page-description">
+                コラージュで表現した「してほしい防災行動」や「備え」について、作品を振り返りながら文章で記録してください。正解はありません。短い文章で大丈夫です。
+            </p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="content">
+
+            <!-- Input Section -->
+            <section class="input-section">
+                <h2 class="section-title">
+                    コラージュで表現した防災行動について教えてください。
+                    <span class="required-badge">必須</span>
+                </h2>
+                
+                <div class="hint-text">
+                    <p>・どんな行動や備えを表現しましたか？</p>
+                    <p>・その行動をしてほしいのは、誰ですか？<br>
+                       （住民／通勤・通学者／買い物客／旅行者 など）</p>
+                </div>
+
+                <textarea 
+                    id="collageDescription" 
+                    class="description-textarea"
+                    rows="4"
+                    placeholder="例）浸水時に早めに避難できるよう、地域の住民が避難経路を確認する行動を表現しました。通勤・通学者に向けたメッセージです。"
+                    aria-label="コラージュで表現した防災行動の説明"
+                    required
+                ></textarea>
+
+                <div class="validation-message" id="descriptionValidation" style="display: none;">
+                    ⚠️ 作品について説明を入力してください
+                </div>
+
+                <div class="character-count" id="characterCount">
+                    <span id="currentCount">0</span> 文字
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer Navigation -->
+        <footer class="page-footer">
+            <button type="button" class="btn-secondary" id="backBtn">
+                ← 戻る
+            </button>
+            <button type="button" class="btn-primary" id="nextBtn" disabled>
+                次へ →
+            </button>
+        </footer>
+
+    </div>
+
+    <script src="log_collage_script.js"></script>
+</body>
+</html>

@@ -781,7 +781,7 @@ if (clearBtn) {
 }
 
 // === PNGスタンプの定義（asset/stamps 配下） ===
-const STAMP_BASE = '/bo-sci-2025-10/workshop/collage/app/asset/stamps/';
+const STAMP_BASE = 'asset/stamps/';
 // ここにファイル名（拡張子なし）を並べるだけでOK
 const STAMP_NAMES = [
   'ashiato_white',
