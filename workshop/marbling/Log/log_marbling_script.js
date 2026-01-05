@@ -10,7 +10,7 @@
 const CONFIG = {
     // Navigation URLs
     backUrl: '../app/index.html',
-    nextUrl: 'collage.html', // Placeholder for collage page
+    nextUrl: '/workshop/collage/Mission/collage_intro.html', // Placeholder for collage page
     
     // localStorage key
     storageKey: 'marblingLog',
