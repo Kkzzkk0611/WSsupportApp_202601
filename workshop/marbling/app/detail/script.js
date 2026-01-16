@@ -168,6 +168,11 @@ function setupDomControls() {
   // --- 2ボタンでモード切替 ---
   const btnPaint = document.getElementById('ctrl-mode-paint'); // 「絵の具を塗る」
   const btnFluid = document.getElementById('ctrl-mode-fluid'); // 「流体を動かす」
+  const btnEraser = document.getElementById('ctrl-eraser');
+
+  // === Eraser toggle state ===
+  let eraserOn = false;
+  let lastNonEraserHex = localStorage.getItem('lastColorHex') || '#FF3B30'; // 初期の戻り色
 
   function updateModeButtons() {
     const paintActive = !!config.PAUSED; // PAUSED=true => 塗るモード
@@ -180,6 +185,16 @@ function setupDomControls() {
       btnFluid.setAttribute('aria-pressed', !paintActive ? 'true' : 'false');
     }
   }
+  function updateEraserButton() {
+    if (!btnEraser) return;
+    btnEraser.classList.toggle('is-active', !!eraserOn);
+    btnEraser.setAttribute('aria-pressed', eraserOn ? 'true' : 'false');
+    // 現在色が白ならアクティブ（"#ffffff" と "#fff" の両方を許容）
+    const hex = (foreColorInput?.value || '').toLowerCase();
+    const isWhite = (hex === '#ffffff' || hex === '#fff');
+
+    btnEraser.classList.toggle('is-active', isWhite);
+    }
   function setMode(paintMode) {
     const prev = config.PAUSED;
     config.PAUSED = !!paintMode;
@@ -190,6 +205,63 @@ function setupDomControls() {
   }
   if (btnPaint) btnPaint.addEventListener('click', () => setMode(true));
   if (btnFluid) btnFluid.addEventListener('click', () => setMode(false));
+  if (btnEraser) {
+  btnEraser.addEventListener('click', () => {
+    if (!foreColorInput) return;
+
+    const WHITE = '#ffffff';
+
+    // まず塗るモードへ（今の挙動を維持）
+    setMode(true);
+
+    const currentHex = (foreColorInput.value || '').toLowerCase();
+
+    if (!eraserOn) {
+      // --- 消しゴムON ---
+      // 白以外のときだけ「戻り色」を保存
+      if (currentHex && currentHex !== WHITE && currentHex !== '#fff') {
+        lastNonEraserHex = currentHex;
+      }
+
+      // 白に切り替え
+      foreColorInput.value = WHITE;
+      config.FORE_COLOR = { r: 255, g: 255, b: 255 };
+
+      // スウォッチ選択解除（白はパレットに無いことが多いので）
+      if (typeof updateSwatchActive === 'function') updateSwatchActive(null);
+
+      eraserOn = true;
+      document.dispatchEvent(new CustomEvent('color:change'));
+      updateEraserButton();
+      return;
+    }
+
+    // --- 消しゴムOFF（元の色に戻す）---
+    const backHex = (lastNonEraserHex || '#FF3B30').toLowerCase();
+
+    foreColorInput.value = backHex;
+
+    const rgb = hexToRgb(backHex);
+    if (rgb) {
+      config.FORE_COLOR = rgb;
+    }
+
+    // パレット内の色ならスウォッチも戻す
+    if (typeof PALETTES !== 'undefined' && PALETTES[paletteName]?.includes(backHex)) {
+      updateSwatchActive(backHex);
+    } else {
+      updateSwatchActive(null);
+    }
+
+    // lastColorHex も戻り色で更新しておく（次回の“戻り先”にもなる）
+    localStorage.setItem('lastColorHex', backHex);
+
+    eraserOn = false;
+    document.dispatchEvent(new CustomEvent('color:change'));
+    updateEraserButton();
+   });
+  } 
+
   updateModeButtons(); // 初期反映
 
   // --- ブラシ ---
@@ -202,6 +274,15 @@ function setupDomControls() {
   }
 
   // --- 色 ---
+
+// === 色を変えたら自動で「絵の具を塗る」モードにする ===
+  function ensurePaintMode() {
+    if (!config.PAUSED) setMode(true); // 流体モード中なら塗るモードへ
+  }
+
+  // カラーピッカー/スウォッチ/パレット変更で飛んでくるイベントをフック
+  document.addEventListener('color:change', ensurePaintMode);
+
   const foreColorInput = document.getElementById('ctrl-fore-color');
   function rgbToHex(r,g,b) {
     return '#' + [r,g,b].map(x => {
@@ -232,6 +313,9 @@ function setupDomControls() {
           updateSwatchActive(null);
         }
         document.dispatchEvent(new CustomEvent('color:change'));
+        // 色を変えたら消しゴムOFF（＝トグル状態を解除）
+        eraserOn = false;
+        updateEraserButton();
       }
     });
   }
@@ -460,18 +544,24 @@ function isMobile () {
     return /Mobi|Android/i.test(navigator.userAgent);
 }
 
-function captureScreenshot () {
-    let res = getResolution(config.CAPTURE_RESOLUTION);
-    let target = createFBO(res.width, res.height, ext.formatRGBA.internalFormat, ext.formatRGBA.format, ext.halfFloatTexType, gl.NEAREST);
-    renderScreenShot(target);
+async function captureScreenshot () {
+  let res = getResolution(config.CAPTURE_RESOLUTION);
+  let target = createFBO(res.width, res.height, ext.formatRGBA.internalFormat, ext.formatRGBA.format, ext.halfFloatTexType, gl.NEAREST);
+  renderScreenShot(target);
 
-    let texture = framebufferToTexture(target);
-    texture = normalizeTexture(texture, target.width, target.height);
+  let texture = framebufferToTexture(target);
+  texture = normalizeTexture(texture, target.width, target.height);
 
-    let captureCanvas = textureToCanvas(texture, target.width, target.height);
-    let datauri = captureCanvas.toDataURL();
-    downloadURI('fluid.png', datauri);
-    URL.revokeObjectURL(datauri);
+  let captureCanvas = textureToCanvas(texture, target.width, target.height);
+
+  // ▼ ここから「ダウンロード」→「一時保存」に変更
+  const datauri = captureCanvas.toDataURL("image/png");
+  const blob = await (await fetch(datauri)).blob();
+
+  await idbSet(KEY_LATEST_MARBLING, blob);
+
+  // 必要なら軽い通知だけ（alertが邪魔なら消してOK）
+  alert("下地を一時保存しました。コラージュで自動反映されます。");
 }
 
 function framebufferToTexture (target) {
@@ -1285,6 +1375,70 @@ updateKeywords();
 initFramebuffers();
 // multipleSplats(parseInt(Math.random() * 20) + 5);
 
+// ===== 追加：保存済みPNG(Blob)を WebGL の dye に復元する =====
+async function restoreMarblingToDye() {
+  const blob = await idbGet(KEY_LATEST_MARBLING);
+  if (!blob) return;
+
+  // Blob -> ImageBitmap
+  const bitmap = await createImageBitmap(blob);
+
+  // 1) 画像用の一時テクスチャを作る（RGBA8）
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+
+  // 2) そのテクスチャを dye に “コピー描画” する
+  //    copyShader はそのまま使える
+  copyProgram.bind();
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.uniform1i(copyProgram.uniforms.uTexture, 0);
+
+  blit(dye.write);
+  dye.swap();
+
+  // 3) 後片付け
+  gl.deleteTexture(tex);
+  bitmap.close?.();
+}
+// ===== 追加：保存済みPNG(Blob)を WebGL の dye に復元する =====
+async function restoreMarblingToDye() {
+  const blob = await idbGet(KEY_LATEST_MARBLING);
+  if (!blob) return;
+
+  // Blob -> ImageBitmap
+  const bitmap = await createImageBitmap(blob);
+
+  // 1) 画像用の一時テクスチャを作る（RGBA8）
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+
+  // 2) そのテクスチャを dye に “コピー描画” する
+  //    copyShader はそのまま使える
+  copyProgram.bind();
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.uniform1i(copyProgram.uniforms.uTexture, 0);
+
+  blit(dye.write);
+  dye.swap();
+
+  // 3) 後片付け
+  gl.deleteTexture(tex);
+  bitmap.close?.();
+}
+
+
 let lastUpdateTime = Date.now();
 let colorUpdateTimer = 0.0;
 
@@ -1754,4 +1908,66 @@ function hashCode (s) {
     }
     return hash;
 };
+
+// ===== IndexedDB: 画像(Blob)を保存/読み込みする共通ヘルパー =====
+const DB_NAME = "ws_art_db";
+const STORE_NAME = "images";
+const KEY_LATEST_MARBLING = "latest_marbling_base";
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbSet(key, value) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function idbGet(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const req = tx.objectStore(STORE_NAME).get(key);
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// 例：マーブリング画面側
+const saveBaseBtn = document.getElementById("saveBaseBtn");
+const marbleCanvas = canvas;
+
+if (saveBaseBtn && marbleCanvas) {
+  saveBaseBtn.addEventListener("click", async () => {
+    const blob = await new Promise((resolve) => {
+      marbleCanvas.toBlob((b) => resolve(b), "image/png");
+    });
+    if (!blob) return alert("保存失敗");
+    await idbSet(KEY_LATEST_MARBLING, blob);
+    alert("下地を保存しました");
+  });
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  await restoreMarblingToDye();   // ← WebGLに復元
+});
+
+window.addEventListener('pageshow', async () => {
+  await restoreMarblingToDye();   // ← 戻る復帰（bfcache含む）でも復元
+});
 

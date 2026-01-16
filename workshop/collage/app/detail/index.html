@@ -12,11 +12,6 @@
     <h1>Collage App</h1>
 
     <div class="row">
-      <label>写真をアップロード</label>
-      <input id="fileInput" type="file" accept="image/*" />
-    </div>
-
-    <div class="row">
       <label>スタンプ（選択してからキャンバスをクリック）</label>
       <div class="thumbs" id="thumbs"></div>
     </div>
@@ -67,20 +62,19 @@
         <span id="colorOut">#FFFFFF</span>
       </label>
 
+      <!-- ★追加：パレット選択（マーブリングと同じID） -->
+      <select id="palette-select" aria-label="パレット選択">
+        <option value="Basic">Basic</option>
+        <option value="Pastel">Pastel</option>
+        <option value="Warm">Warm</option>
+        <option value="Cool">Cool</option>
+      </select>
+
       <div class="color-picker">
         <input id="color" type="color" value="#ffffff" aria-label="カラーピッカー" />
-        <div class="swatches" id="swatches" role="listbox" aria-label="プリセット色">
-          <!-- よく使う色（必要に応じて増減OK） -->
-          <button type="button" class="swatch" data-color="#000000" title="黒" aria-label="黒" role="option"></button>
-          <button type="button" class="swatch" data-color="#ffffff" title="白" aria-label="白" role="option"></button>
-          <button type="button" class="swatch" data-color="#FF3B30" title="赤" aria-label="赤" role="option"></button>
-          <button type="button" class="swatch" data-color="#FF9500" title="オレンジ" aria-label="オレンジ" role="option"></button>
-          <button type="button" class="swatch" data-color="#FFCC00" title="黄" aria-label="黄" role="option"></button>
-          <button type="button" class="swatch" data-color="#34C759" title="緑" aria-label="緑" role="option"></button>
-          <button type="button" class="swatch" data-color="#007AFF" title="青" aria-label="青" role="option"></button>
-          <button type="button" class="swatch" data-color="#5856D6" title="紫" aria-label="紫" role="option"></button>
-          <button type="button" class="swatch" data-color="#FF2D55" title="ピンク" aria-label="ピンク" role="option"></button>
-        </div>
+
+        <!-- ★ここは空にする：swatchボタンは app.js で生成 -->
+        <div class="swatches" id="swatches" role="listbox" aria-label="プリセット色"></div>
       </div>
     </div>
 

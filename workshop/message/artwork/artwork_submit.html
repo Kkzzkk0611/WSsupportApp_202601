@@ -40,7 +40,7 @@
                     type="text" 
                     id="artworkTitle" 
                     class="title-input"
-                    placeholder="例：このまちで、あなたが守ってほしい風景"
+                    placeholder="例：高台に向かって走れ！"
                     aria-label="作品タイトル"
                     required
                 />
@@ -50,53 +50,10 @@
                 </div>
             </section>
 
-            <!-- Input Section 2: Image Upload -->
-            <section class="input-section">
-                <h2 class="section-title">
-                    作品画像
-                    <span class="required-badge">必須</span>
-                </h2>
-                
-                <p class="section-description">
-                    マーブリング＋コラージュで制作した作品のスクリーンショットをアップロードしてください
-                </p>
-
-                <div class="upload-area">
-                    <input 
-                        type="file" 
-                        id="artworkImage" 
-                        class="file-input"
-                        accept="image/*"
-                        aria-label="作品画像"
-                    />
-                    <label for="artworkImage" class="upload-button">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                        <span>画像を選択</span>
-                    </label>
-                    
-                    <div id="imagePreview" class="image-preview" style="display: none;">
-                        <img id="previewImg" src="" alt="作品プレビュー" />
-                        <button type="button" id="removeImage" class="remove-button">✕ 削除</button>
-                    </div>
-                </div>
-
-                <p class="note-text">
-                    ※ 明るさ・傾きなど軽微な調整はOKです。文字入れなどの大きな加工は不可。
-                </p>
-
-                <div class="validation-message" id="imageValidation" style="display: none;">
-                    ⚠️ 作品画像をアップロードしてください
-                </div>
-            </section>
-
             <!-- Input Section 3: Creator Name -->
             <section class="input-section">
                 <h2 class="section-title">
-                    制作者名
+                    ペンネーム
                     <span class="required-badge">必須</span>
                 </h2>
                 
@@ -110,7 +67,7 @@
                 />
 
                 <div class="validation-message" id="nameValidation" style="display: none;">
-                    ⚠️ 制作者名を入力してください
+                    ⚠️ ペンネームを入力してください
                 </div>
             </section>
 

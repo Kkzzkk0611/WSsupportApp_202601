@@ -9,7 +9,7 @@
 
 const CONFIG = {
     // Navigation URLs
-    backUrl: 'workshop/collage/Log/log_collage.html',
+    backUrl: '/workshop/collage/Log/log_collage.html',
     nextUrl: '../lastconfirm/final_submit.html', // Placeholder for confirmation page
     
     // localStorage key
@@ -25,8 +25,8 @@ const CONFIG = {
 
 const state = {
     title: '',
-    imageFile: null,
-    imageDataUrl: null,
+    //imageFile: null,
+    //imageDataUrl: null,
     creatorName: ''
 };
 
@@ -36,13 +36,13 @@ const state = {
 
 const elements = {
     titleInput: document.getElementById('artworkTitle'),
-    imageInput: document.getElementById('artworkImage'),
+    //imageInput: document.getElementById('artworkImage'),
     nameInput: document.getElementById('creatorName'),
-    imagePreview: document.getElementById('imagePreview'),
+    //imagePreview: document.getElementById('imagePreview'),
     previewImg: document.getElementById('previewImg'),
     removeImageBtn: document.getElementById('removeImage'),
     titleValidation: document.getElementById('titleValidation'),
-    imageValidation: document.getElementById('imageValidation'),
+    //imageValidation: document.getElementById('imageValidation'),
     nameValidation: document.getElementById('nameValidation'),
     backBtn: document.getElementById('backBtn'),
     nextBtn: document.getElementById('nextBtn')
@@ -226,10 +226,8 @@ function validateField(fieldName) {
 
 function validateForm() {
     const titleValid = validateField('title');
-    const imageValid = validateField('image');
     const nameValid = validateField('name');
-    
-    return titleValid && imageValid && nameValid;
+    return titleValid && nameValid;
 }
 
 function updateNextButtonState() {

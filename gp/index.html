@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>ご近所アートチャット</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css">
+  <script src="https://js.arcgis.com/4.30/"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <header class="header">
+  <div class="header-content">
+    <div class="header-left">
+      <div class="header-text-block">
+        <p class="header-tagline">防災 × 市民科学 × アート</p>
+        <h1 class="header-title-main">ご近所アートチャット</h1>
+      </div>
+    </div>
+    <div class="header-right">
+      <a href="../index.html" id="backToTopButton" class="header-back-button">トップに戻る</a>
+    </div>
+  </div>
+</header>
+
+  <div class="view-tabs mobile-only">
+    <button id="tabMap" class="tab-button active" onclick="switchTab('map')">
+      <i class="fa-regular fa-map"></i> マップ
+    </button>
+    <button id="tabList" class="tab-button" onclick="switchTab('list')">
+      <i class="fa-solid fa-list"></i> 作品一覧
+    </button>
+  </div>
+
+  <div class="content-wrapper">
+    
+    <div id="desktopCommentPanel" class="desktop-panel desktop-left-panel hidden-on-mobile">
+      <div class="panel-header">
+        <h3><i class="fa-regular fa-comments"></i> コメントボード</h3>
+        <p class="panel-subtitle">作品一覧パネルで選択中の作品へのコメントが表示されます。</p>
+      </div>
+      <div id="desktopCommentsList" class="desktop-comments-list">
+        <div class="empty-state">
+          <p>右側のリストをスクロールして<br>作品を選んでください</p>
+        </div>
+      </div>
+      <div class="desktop-comment-input-area">
+  <div id="desktopReplyingIndicator" class="replying-indicator hidden">
+    <span id="desktopReplyingText"></span>
+    <button onclick="cancelReply()" class="cancel-reply-btn">✕</button>
+  </div>
+
+  <div class="comment-form-container">
+    <div class="comment-target-info">
+      <span class="target-label">選択中：</span>
+      <span id="targetArtworkTitle" class="target-title">（作品を選択してください）</span>
+    </div>
+    
+    <p class="comment-guide-text">
+      <span id="targetAuthorName">作者</span> さんにコメントを送る
+    </p>
+    <p class="comment-sub-text">作品の感想や共感ポイント、気づいたこと等を気軽にどうぞ！</p>
+
+    <textarea id="desktopCommentInput" class="comment-textarea" placeholder="コメントを入力..."></textarea>
+    
+    <div class="comment-form-footer">
+      <button id="desktopSendCommentButton" class="send-button-yellow" onclick="handleDesktopSendComment()">
+        <span>コメントを送信する</span>
+        <i class="fa-solid fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+</div>
+    </div>
+    <div id="mapContainer" class="map-container active">
+      <div id="mapLoading">
+        <div class="loader"></div>
+        <p>マップデータを取得中です…</p>
+      </div>
+
+      <div id="mapView">
+        <div id="markersContainer" class="markers-container"></div>
+      </div>
+      <div class="tilt-controls">
+        <button class="tilt-button" onclick="adjustTilt('up')">△</button>
+        <button class="tilt-button" onclick="adjustTilt('down')">▽</button>
+        <button id="sproutFilterBtn" class="tilt-button sprout-filter-btn" onclick="toggleSproutMode()">
+          <i class="fa-solid fa-seedling"></i>
+        </button>
+      </div>
+      <button id="mapGuideButton" class="map-guide-button" onclick="showSiteGuide()">
+        <i class="fa-solid fa-question"></i>
+      </button>
+
+      <div class="bottom-instruction mobile-only">
+        <p>
+          <i class="fa-regular fa-hand-pointer"></i>
+          作品を探してタップしてみましょう！
+        </p>
+      </div>
+    </div>
+
+    <div id="listView" class="list-view hidden">
+      <div class="desktop-list-header hidden-on-mobile">
+        <h3><i class="fa-solid fa-images"></i> この地域の作品一覧</h3>
+        <p class="panel-subtitle">気になる作品をクリックして、作者の表現意図を鑑賞してみましょう！</p>
+      </div>
+      <div id="artworkListContainer" class="artwork-list-container">
+        </div>
+    </div>
+
+  </div>
+
+  <div id="sproutInfo" class="sprout-info">
+    <p id="sproutInfoText"></p>
+  </div>
+
+  <div id="siteGuide" class="site-guide">
+    <button class="guide-close" onclick="closeSiteGuide()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <div class="guide-content">
+      <div class="guide-item">
+        <div class="guide-icon guide-icon-1">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+        </div>
+        <div>
+          <p class="guide-text">地域のみなさんが作った作品が</br>マップ上に並んでいます。</p>
+        </div>
+      </div>
+
+      <div class="guide-item">
+        <div class="guide-icon guide-icon-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+            </path>
+          </svg>
+        </div>
+        <div>
+          <p class="guide-text">気になる作品画像をタップして、</br>作者が作品に込めた想いに共感したら、</br>「想いを受け取る」ボタンを押してみましょう！</p>
+        </div>
+      </div>
+
+      <div class="guide-item">
+        <div class="guide-icon guide-icon-3">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <p class="guide-text">作品には、地域の皆さんだからこその気づき、共感が寄せられているかもしれません。</p>
+        </div>
+      </div>
+
+      <div class="guide-item">
+        <div class="guide-icon guide-icon-4">
+          <i class="fa-solid fa-seedling"></i>
+        </div>
+        <div>
+          <p class="guide-text">
+            「共助の芽」は地域の共助の想いが育っている目印です。
+          </p>
+          <p style="font-size: 10px; color: #7c2d12; margin-top: 4px;">
+            ※「共助」とは助け合いによる防災です。
+          </p>
+        </div>
+      </div>
+
+      <div class="guide-footer">
+        <p>地域の作品の想いを</br>受け取ってみましょう！</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="artworkModal" class="modal">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="modal-image-container">
+        <img id="modalImage" src="" alt="" class="modal-image">
+      </div>
+
+      <div class="modal-body">
+        <div class="artwork-info">
+          <h2 id="modalTitle" class="artwork-title"></h2>
+          <p id="modalAuthor" class="artwork-author"></p>
+          <div id="modalHazardInfo" class="modal-hazard-info"></div>
+          <div class="artwork-description">
+            <div id="modalDescription" class="description-text"></div>
+          </div>
+
+          <div class="like-button-container">
+            <button id="likeButton" class="like-button" onclick="handleLike()">
+              <svg class="like-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                </path>
+              </svg>
+              <div class="like-text">
+                <span id="likeButtonText">いいね！</span>
+                <span id="likeCount" class="like-count-text"></span>
+              </div>
+            </button>
+            <div id="heartExplosion" class="heart-explosion"></div>
+          </div>
+        </div>
+
+        <div class="comments-section">
+          <div class="comments-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <h3>コメント</h3>
+            <span id="commentCount" class="comment-count"></span>
+          </div>
+
+          <div id="commentsList" class="comments-list"></div>
+
+         <div class="comment-input-container">
+          <div id="replyingIndicator" class="replying-indicator hidden">
+              <span id="replyingText"></span>
+              <button onclick="cancelReply()" class="cancel-reply-btn">✕</button>
+            </div>
+            <div class="comment-input-wrapper">
+              <input type="text" id="commentInput" placeholder="コメントを入力..." class="comment-input">
+              <button id="sendCommentButton" class="send-button" onclick="handleSendComment()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+      getFirestore, collection, doc, setDoc, updateDoc, 
+      increment, onSnapshot, addDoc, serverTimestamp, query, orderBy 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    window.firebaseModules = {
+      initializeApp, getFirestore, collection, doc, setDoc, 
+      updateDoc, increment, onSnapshot, addDoc, serverTimestamp, query, orderBy
+    };
+  </script>
+  <script type="module" src="script.js"></script>
+</body>
+
+</html>
