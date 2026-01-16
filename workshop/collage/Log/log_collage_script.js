@@ -10,7 +10,7 @@
 const CONFIG = {
     // Navigation URLs
     backUrl: '../app/index.html',
-    nextUrl: '/workshop/message/artwork/artwork_submit.html', // Placeholder for message creation page
+    nextUrl: '../../message/artwork/artwork_submit.html', // Placeholder for message creation page
     
     // localStorage key
     storageKey: 'collageLog',
