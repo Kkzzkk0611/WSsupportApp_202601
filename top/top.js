@@ -279,7 +279,7 @@ withoutAccount?.addEventListener("click", () => {
 });
 proceedGuest?.addEventListener("click", () => {
   confirmPopup?.classList.remove("show");
-  window.location.href = "workshop/intro/index.html";
+  window.location.href = "/WSsupportApp_202601/workshop/intro/index.html";
 });
 closeChoicePopup?.addEventListener("click", () => {
   choicePopup?.classList.remove("show");
@@ -399,7 +399,7 @@ async function updateUserUI(user) {
       school
     )}" class="header-btn">${school}ご近所さんアートチャット</a>
     <a href="map/index.html" class="header-btn">防災行動マップ</a>
-    <a href="workshop/intro/index.html" class="header-btn highlight-btn">作品制作</a>
+    <a href="/WSsupportApp_202601/workshop/intro/index.html" class="header-btn highlight-btn">作品制作</a>
   `;
 
   // 🔹ログアウトボタンのバインド
