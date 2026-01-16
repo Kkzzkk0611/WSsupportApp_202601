@@ -28,10 +28,10 @@ const CONFIG = {
     
     // Page URLs - 実際のプロジェクト構成に合わせて修正してください
     PAGES: {
-        hazard: '/workshop/map/Log/log_hazard_map.html',        // ← 対象地点/ハザードマップ選択ページ
-        marbling: '/workshop/marbling/Log/log_marbling.html',      // ← マーブリング体験ページ
-        collage: '/workshop/collage/Log/log_collage.html',         // ← コラージュ体験ページ
-        artwork: '/workshop/message/artwork/artwork_submit.html',   // ← 作品情報入力ページ
+        hazard: '../../map/Log/log_hazard_map.html',        // ← 対象地点/ハザードマップ選択ページ
+        marbling: '../../marbling/Log/log_marbling.html',      // ← マーブリング体験ページ
+        collage: '../../collage/Log/log_collage.html',         // ← コラージュ体験ページ
+        artwork: '../../message/artwork/artwork_submit.html',   // ← 作品情報入力ページ
         next: '../../present/index.html',     // ← 次の防災行動ページ（仮）
         map: 'https://arcgis.com/apps/mapviewer/',  // ← 作品集マップURL（仮）
         home: '../index.html'                        // ← トップページ
