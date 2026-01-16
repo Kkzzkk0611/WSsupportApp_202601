@@ -789,3 +789,40 @@ html, body {
 .header-back-btn:hover {
   opacity: 0.8; /* ホバー時に少し薄く */
 }
+
+/* --- 鑑賞済みリボン（斜めがけ） --- */
+
+/* まず、カードからはみ出さないようにする設定 */
+.art-card {
+  position: relative; /* リボンを置く基準にする */
+  overflow: hidden;   /* はみ出したリボンをカットする */
+}
+
+/* リボンの配置エリア（左上） */
+.ribbon-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 85px;  /* リボンの表示エリアサイズ */
+  height: 85px;
+  overflow: hidden;
+  z-index: 10;  /* 画像より手前に出す */
+  pointer-events: none; /* クリックの邪魔をしない */
+}
+
+/* リボンの帯と文字 */
+.ribbon-text {
+  position: absolute;
+  top: 15px;         /* 上からの位置調整 */
+  left: -32px;       /* 左からの位置調整 */
+  width: 120px;      /* 帯の長さ */
+  background-color: #F2C94C; /* ピンと同じ黄色！ */
+  color: #5d4037;    /* 文字は濃い茶色で見やすく */
+  text-align: center;
+  font-size: 0.75em;
+  font-weight: bold;
+  padding: 4px 0;    /* 帯の太さ */
+  transform: rotate(-45deg); /* 斜めに回転！ */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15); /* 影をつけて立体的に */
+  border: 1px solid #fff; /* 白いフチでポップに */
+}

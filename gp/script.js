@@ -63,6 +63,7 @@ let view;
 let surveyLayer;
 let artworks = [];
 let artworkLikes = {};
+let newArtworkIds = new Set();
 let currentArtwork = null;
 let hasLiked = false;
 
@@ -670,16 +671,20 @@ function getHazardColor(typeString) {
   return "#6b7280";
 }
 
-const DISPLAY_KEYWORDS = [
-  "逃げる",
+const HIDE_KEYWORDS = [
+  "猛犬危険",
+  "散歩好きの皆",
+  "慶應生は勉強",
   "逃げよう",
-  "大雨のとき",
-  "水が襲う",
-  "日頃の準備",
-  "綱島エリア",
-  "日吉駅の周りは坂",
-  "もしもの時は躊躇なく",
-  "この地域の住民に",
+  "神だのみ",
+  "浸水危険",
+  "上へ逃げろ",
+  "買い物客",
+  "避難する方向に",
+  "流域の方へ",
+  "迅速な避難",
+  "危ない気お",
+  "土の表情",
 ];
 
 async function loadArtworksFromSurvey() {
@@ -687,7 +692,15 @@ async function loadArtworksFromSurvey() {
 
   const query = surveyLayer.createQuery();
   query.where = "1=1";
-  query.outFields = ["*"];
+  query.outFields = [
+    "objectid",
+    "Message",
+    "field_24",
+    "field_25",
+    "Mabling",
+    "collage",
+    "CreationDate",
+  ];
   query.returnGeometry = true;
   query.returnAttachments = true;
 
@@ -722,8 +735,13 @@ async function loadArtworksFromSurvey() {
 
     artworks = allArtworks.filter((art) => {
       if (!art.title) return false;
-      return DISPLAY_KEYWORDS.some((keyword) => art.title.includes(keyword));
+      return !HIDE_KEYWORDS.some((keyword) => art.title.includes(keyword));
     });
+
+    const latest3 = [...artworks]
+      .sort((a, b) => b.createdDate - a.createdDate)
+      .slice(0, 3);
+    newArtworkIds = new Set(latest3.map((a) => a.id));
 
     artworks.forEach((a) => {
       if (artworkLikes[a.id] === undefined) {
@@ -786,6 +804,7 @@ function renderMarkers() {
 }
 
 function createArtworkMarker(artwork, position, zIndex) {
+  const isNew = newArtworkIds.has(artwork.id);
   const marker = document.createElement("div");
   const likes = artworkLikes[artwork.id] || 0;
   const isPopular = likes > 35;
@@ -806,6 +825,7 @@ function createArtworkMarker(artwork, position, zIndex) {
 
   marker.innerHTML = `
     <div class="marker-container" style="border: 3px solid ${hazardColor};">
+     ${isNew ? '<div class="marker-new-badge">New!</div>' : ""} 
       <div class="marker-image-wrapper">
         <img src="${artwork.imageUrl}" class="marker-image" alt="${
     artwork.title
@@ -1307,9 +1327,9 @@ function handleSproutClick(cluster, sproutElement) {
   const info = safeGet("sproutInfo");
   const infoText = safeGet("sproutInfoText");
   if (info && infoText) {
-    infoText.innerHTML = `異なるハザードへの備えが集まり、<br>共助の芽が育っています！`;
+    infoText.innerHTML = `${cluster.typeCount}種類のハザードへの備えが集まり、<br>共助の芽が育っています！`;
     info.classList.add("show");
-    setTimeout(() => info.classList.remove("show"), 4000);
+    setTimeout(() => info.classList.remove("show"), 10000);
   }
 
   setTimeout(() => {
@@ -1521,7 +1541,7 @@ window.toggleSproutMode = function () {
     const info = safeGet("sproutInfo");
     const infoText = safeGet("sproutInfoText");
     if (info && infoText) {
-      infoText.innerHTML = `作品の種類が増えると、<br>共助の芽が育ちます！`;
+      infoText.innerHTML = `異なるハザードマップを用いた作品が集まると、<br>共助の芽が育ちます！`;
       info.classList.add("force-show");
     }
     if (view) {

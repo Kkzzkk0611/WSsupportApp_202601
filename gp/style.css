@@ -199,10 +199,7 @@ body {
    List View & Cards (Global / Mobile Default)
    ========================================= */
 
-.artwork-list-container {
-  display: block;
-  width: 100%;
-}
+
 
 /* --- List Card Style --- */
 .list-card {
@@ -913,6 +910,7 @@ body.sprout-mode-active .sprout-marker {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
   border-radius: 12px;
 }
 
@@ -1431,17 +1429,7 @@ body.sprout-mode-active .sprout-marker {
     padding: 16px;
   }
 
-  /* Scrollable List Container */
-  .artwork-list-container {
-    flex: 1;
-    overflow-y: auto; /* Desktop scroll */
-    padding: 0;
-    padding-top: 25vh;
-    padding-bottom: 50vh;
-    scroll-snap-type: y mandatory;
-    scroll-behavior: smooth;
-    display: flex; flex-direction: column; gap: 40px;
-  }
+  
 
   /* --- Card Overrides for Desktop --- */
   .list-card {
@@ -1567,15 +1555,7 @@ body.sprout-mode-active .sprout-marker {
     flex-shrink: 0; 
   }
 
-  .artwork-list-container {
-    flex: 1; 
-    overflow-y: auto; 
-    padding: 0;
-    padding-top: 25vh;   
-    padding-bottom: 50vh; 
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0,0,0,0.2) transparent;
-  }
+
   
   .desktop-comment-input-area {
     background: transparent;
@@ -1765,19 +1745,17 @@ body.sprout-mode-active .sprout-marker {
 
 
   /* --- Right: Artwork List Specifics --- */
+
   .artwork-list-container {
     flex: 1;
     overflow-y: auto;
     padding: 0;
     padding-top: 25vh;
     padding-bottom: 50vh;
-    
-    /* スクロールバー装飾 */
     scrollbar-width: thin;
     scrollbar-color: rgba(0,0,0,0.2) transparent;
   }
 
-  /* 中央マップのスタイル維持 */
   .map-container {
     border-radius: 24px;
     overflow: hidden;
@@ -1850,3 +1828,32 @@ body.sprout-mode-active .sprout-marker {
 .header-back-button:active {
   transform: translateY(0);
 }
+
+#mapView, #mapContainer {
+    touch-action: none;
+  }
+
+  .marker-new-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background: #ef4444;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 20;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  /* Newバッジ：作品リスト用 */
+  .list-card-new-badge {
+    background: #ef4444;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-right: 8px;
+    display: inline-block;
+  }

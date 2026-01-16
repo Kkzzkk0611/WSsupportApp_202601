@@ -32,7 +32,7 @@ const CONFIG = {
         marbling: '/workshop/marbling/Log/log_marbling.html',      // ← マーブリング体験ページ
         collage: '/workshop/collage/Log/log_collage.html',         // ← コラージュ体験ページ
         artwork: '/workshop/message/artwork/artwork_submit.html',   // ← 作品情報入力ページ
-        next: '/workshop/present/index.html',     // ← 次の防災行動ページ（仮）
+        next: '../../present/index.html',     // ← 次の防災行動ページ（仮）
         map: 'https://arcgis.com/apps/mapviewer/',  // ← 作品集マップURL（仮）
         home: '../index.html'                        // ← トップページ
     },
