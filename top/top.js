@@ -398,7 +398,7 @@ async function updateUserUI(user) {
     <a href="../gp/gp.html?school=${encodeURIComponent(
       school
     )}" class="header-btn">${school}ご近所さんアートチャット</a>
-    <a href="../mapindex.html" class="header-btn">防災行動マップ</a>
+    <a href="../map/index.html" class="header-btn">防災行動マップ</a>
     <a href="../workshop/intro/index.html" class="header-btn highlight-btn">作品制作</a>
   `;
 
