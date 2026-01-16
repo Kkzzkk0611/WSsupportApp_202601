@@ -255,9 +255,9 @@ require([
     }
   }
 
-  // --- フィルター適用（修正版：survey2を重ねる） ---
+  // --- フィルター適用（決定版：強制表示あり） ---
   function updateMapFilter() {
-    // 1. 基本の絞り込み条件を作る（カテゴリやフェーズなど）
+    // 1. 基本の絞り込み条件を作る
     let whereClauses = [];
     const jishinSQL = "(field_24 LIKE '%震度%' OR field_24 LIKE '%火災%')";
     const jibanSQL  = "(field_24 LIKE '%土砂災害%' OR field_24 LIKE '%液状化%')";
@@ -269,12 +269,12 @@ require([
         whereClauses.push(`objectid NOT IN (${hiddenIds.join(",")})`);
     }
 
-    // カテゴリによる絞り込み
+    // カテゴリ
     if (currentCategory === "jishin") whereClauses.push(jishinSQL);
     else if (currentCategory === "jiban") whereClauses.push(`${jibanSQL} AND NOT ${jishinSQL}`);
     else if (currentCategory === "mizu") whereClauses.push(`${mizuSQL} AND NOT ${jishinSQL} AND NOT ${jibanSQL}`);
 
-    // フェーズによる絞り込み
+    // フェーズ
     if (currentPhase !== "all") {
         const keywords = phaseKeywords[currentPhase];
         const keywordConditions = keywords.map(kw => 
@@ -283,7 +283,7 @@ require([
         whereClauses.push(`(${keywordConditions})`);
     }
 
-    // お気に入り・アクション絞り込み
+    // お気に入り・アクション
     let savedIds = [];
     const savedHearts = JSON.parse(localStorage.getItem("bousai_hearts") || "[]");
     const savedActions = JSON.parse(localStorage.getItem("bousai_actions") || "[]");
@@ -304,39 +304,36 @@ require([
         }
     }
 
-    // ★基本のSQL（survey用：鑑賞済みかは関係なく、条件に合うものすべて）
     const finalSQL = whereClauses.length > 0 ? whereClauses.join(" AND ") : "1=1";
 
-
-    // 2. 鑑賞済みレイヤー（survey2）用の条件を作る
-    let viewedSQL = finalSQL; // 基本条件を引き継ぐ
-    
-    // 鑑賞済みIDリストを取得
+    // 2. 鑑賞済みレイヤー（survey2）用の条件
+    let viewedSQL = finalSQL;
     let viewedList = JSON.parse(localStorage.getItem("bousai_viewed") || "[]");
-    // 念のため隠しIDを除外
     viewedList = viewedList.filter(id => !hiddenIds.includes(id));
 
     if (viewedList.length > 0) {
-        // 条件に合う かつ 鑑賞済みのものだけ
         viewedSQL += ` AND objectid IN (${viewedList.join(",")})`;
     } else {
-        // 鑑賞済みが1つもないなら、survey2は何も表示しない
         viewedSQL += " AND 1=0";
     }
 
-
-    // 3. マップ上のレイヤーにそれぞれ命令する
+    // 3. マップ上のレイヤーに命令する
     [webMap2D, webScene3D].forEach(map => {
-      // (A) 元のレイヤー（survey）には「基本の条件」を入れる
+      // (A) 元のレイヤー（survey）
       const artPins = map.allLayers.find(l => l.title === "survey");
       if (artPins) artPins.definitionExpression = finalSQL;
 
-      // (B) 重ねるレイヤー（survey2）には「鑑賞済み限定の条件」を入れる
-      const viewedPins = map.allLayers.find(l => l.title === "survey2");
-      if (viewedPins) viewedPins.definitionExpression = viewedSQL;
+      // (B) 重ねるレイヤー（survey2）
+      // ★名前が少し違っても見つかるように includes を使用
+      const viewedPins = map.allLayers.find(l => l.title === "survey2" || l.title.includes("survey2"));
+      if (viewedPins) {
+          viewedPins.definitionExpression = viewedSQL;
+          viewedPins.visible = true; // ★【重要】ここで強制的に表示ONにする！
+          viewedPins.opacity = 1;    // 透明度も100%にする
+      }
     });
 
-    // 4. サイドバーのリスト更新（これは元のsurveyレイヤーを基準にする）
+    // 4. サイドバー更新
     const artPinsLayer = activeView.map.allLayers.find(l => l.title === "survey");
     if (artPinsLayer) {
         activeView.whenLayerView(artPinsLayer).then(lv => {
@@ -345,7 +342,6 @@ require([
     }
 
     updateHeaderStats();
-    // updateViewedGlows(); // これはもう不要になるかもですが、一旦残しておきます
   }
 
   async function updateHeaderStats() {
@@ -896,7 +892,7 @@ function extractAddressee(message, collage, Mabling) {
     const backBtn = document.getElementById("back-to-top-btn");
     if (backBtn) {
         backBtn.addEventListener("click", () => {
-            window.location.href = "../../../index.html"; // トップページへ移動
+            window.location.href = "index.html"; // トップページへ移動
         });
     }
 

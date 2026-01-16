@@ -10,20 +10,16 @@ require([
   "esri/symbols/PointSymbol3D",
   "esri/symbols/IconSymbol3DLayer",
   "esri/symbols/callouts/LineCallout3D",
-  "esri/core/reactiveUtils",
-  "esri/layers/GraphicsLayer"
+  "esri/core/reactiveUtils"
 ], function(
   WebMap, WebScene, MapView, SceneView, Graphic, Legend, symbolUtils,
   SimpleRenderer, PointSymbol3D, IconSymbol3DLayer, LineCallout3D,
-  reactiveUtils, GraphicsLayer
+  reactiveUtils
 ) {
 
   // --- 1. マップ定義 ---
   const webMap2D = new WebMap({portalItem: { id: "fef70d22c8bd4545be008db3c813117c" }});
   const webScene3D = new WebScene({portalItem: { id: "1d460637ebc54346851a47514f576433"}});
-
-  const glowLayer = new GraphicsLayer({ listMode: "hide", opacity: 0.7 });
-  webMap2D.add(glowLayer, 0); // 0番目＝一番下（ピンの後ろ）に追加！
   
   let activeView = new MapView({
     container: "viewDiv",
@@ -57,7 +53,6 @@ require([
     
     addSymbolToCategoryChips();
     addSymbolToResourceList();
-    updateViewedGlows();
   }
 
   // --- 3. UI設定 (静的) ---
@@ -260,20 +255,26 @@ require([
     }
   }
 
-  // --- フィルター適用 ---
+  // --- フィルター適用（決定版：強制表示あり） ---
   function updateMapFilter() {
+    // 1. 基本の絞り込み条件を作る
     let whereClauses = [];
     const jishinSQL = "(field_24 LIKE '%震度%' OR field_24 LIKE '%火災%')";
     const jibanSQL  = "(field_24 LIKE '%土砂災害%' OR field_24 LIKE '%液状化%')";
     const mizuSQL   = "(field_24 LIKE '%洪水%' OR field_24 LIKE '%高潮%' OR field_24 LIKE '%津波%')";
+    
+    // 除外したいID
     const hiddenIds = [23, 25, 26, 27, 28];
     if (hiddenIds.length > 0) {
         whereClauses.push(`objectid NOT IN (${hiddenIds.join(",")})`);
     }
+
+    // カテゴリ
     if (currentCategory === "jishin") whereClauses.push(jishinSQL);
     else if (currentCategory === "jiban") whereClauses.push(`${jibanSQL} AND NOT ${jishinSQL}`);
     else if (currentCategory === "mizu") whereClauses.push(`${mizuSQL} AND NOT ${jishinSQL} AND NOT ${jibanSQL}`);
 
+    // フェーズ
     if (currentPhase !== "all") {
         const keywords = phaseKeywords[currentPhase];
         const keywordConditions = keywords.map(kw => 
@@ -282,6 +283,7 @@ require([
         whereClauses.push(`(${keywordConditions})`);
     }
 
+    // お気に入り・アクション
     let savedIds = [];
     const savedHearts = JSON.parse(localStorage.getItem("bousai_hearts") || "[]");
     const savedActions = JSON.parse(localStorage.getItem("bousai_actions") || "[]");
@@ -304,18 +306,42 @@ require([
 
     const finalSQL = whereClauses.length > 0 ? whereClauses.join(" AND ") : "1=1";
 
+    // 2. 鑑賞済みレイヤー（survey2）用の条件
+    let viewedSQL = finalSQL;
+    let viewedList = JSON.parse(localStorage.getItem("bousai_viewed") || "[]");
+    viewedList = viewedList.filter(id => !hiddenIds.includes(id));
+
+    if (viewedList.length > 0) {
+        viewedSQL += ` AND objectid IN (${viewedList.join(",")})`;
+    } else {
+        viewedSQL += " AND 1=0";
+    }
+
+    // 3. マップ上のレイヤーに命令する
     [webMap2D, webScene3D].forEach(map => {
+      // (A) 元のレイヤー（survey）
       const artPins = map.allLayers.find(l => l.title === "survey");
       if (artPins) artPins.definitionExpression = finalSQL;
+
+      // (B) 重ねるレイヤー（survey2）
+      // ★名前が少し違っても見つかるように includes を使用
+      const viewedPins = map.allLayers.find(l => l.title === "survey2" || l.title.includes("survey2"));
+      if (viewedPins) {
+          viewedPins.definitionExpression = viewedSQL;
+          viewedPins.visible = true; // ★【重要】ここで強制的に表示ONにする！
+          viewedPins.opacity = 1;    // 透明度も100%にする
+      }
     });
 
+    // 4. サイドバー更新
     const artPinsLayer = activeView.map.allLayers.find(l => l.title === "survey");
-    activeView.whenLayerView(artPinsLayer).then(lv => {
-      updateSidebarList(lv, artPinsLayer, activeView);
-    });
-    updateHeaderStats();
+    if (artPinsLayer) {
+        activeView.whenLayerView(artPinsLayer).then(lv => {
+            updateSidebarList(lv, artPinsLayer, activeView);
+        });
+    }
 
-    updateViewedGlows();
+    updateHeaderStats();
   }
 
   async function updateHeaderStats() {
@@ -489,6 +515,7 @@ require([
 
     const operationalLayers = currentView.map.allLayers.filter(layer => {
       return layer.title !== "survey" && 
+             layer.title !== "survey2" && 
              layer.title !== "衛星画像（World Imagery）" && 
              (layer.title.includes("_clip") || layer.type === "feature" || layer.type === "tile");
     });
@@ -632,6 +659,7 @@ function extractAddressee(message, collage, Mabling) {
     }).catch(error => { console.error("ラベル描画エラー:", error); });
   }
 
+  // --- サイドバーのリスト更新（リボン付きver） ---
   async function updateSidebarList(layerView, layer, view) {
     const listContainer = document.getElementById("art-list-container");
     const query = layer.createQuery();
@@ -642,6 +670,7 @@ function extractAddressee(message, collage, Mabling) {
     try {
         const results = await layer.queryFeatures(query);
         listContainer.innerHTML = ""; 
+        
         if (results.features.length === 0) {
             listContainer.innerHTML = `
                 <div style="text-align:center; padding:30px; color:#888;">
@@ -651,18 +680,36 @@ function extractAddressee(message, collage, Mabling) {
             return;
         }
 
+        // ★ここで鑑賞済みリストを読み込む！
+        const viewedList = JSON.parse(localStorage.getItem("bousai_viewed") || "[]");
+
         for (const feature of results.features) {
             const oid = feature.attributes.objectid;
             const savedHearts = JSON.parse(localStorage.getItem("bousai_hearts") || "[]");
             const savedActions = JSON.parse(localStorage.getItem("bousai_actions") || "[]");
+            
+            // アイコン（ハート・星）の準備
             let iconsHtml = "";
             if(savedHearts.includes(oid)) iconsHtml += " <span style='color:#ff69b4;'>💖</span>";
             if(savedActions.includes(oid)) iconsHtml += " <span style='color:#fbc02d;'>✨</span>";
 
+            // ★リボンの準備（鑑賞済みならHTMLを作る）
+            let ribbonHtml = "";
+            if (viewedList.includes(oid)) {
+                ribbonHtml = `
+                  <div class="ribbon-wrapper">
+                    <div class="ribbon-text">鑑賞済</div>
+                  </div>
+                `;
+            }
+
             const card = document.createElement("div");
             card.className = "art-card";
             card.id = `card-${oid}`;
+            
+            // ★カードの中に ribbonHtml を埋め込む
             card.innerHTML = `
+                ${ribbonHtml}
                 <img src="https://via.placeholder.com/200?text=..." class="art-card-img" id="img-${oid}">
                 <div class="art-card-info">
                     <div class="art-title">作者：
@@ -671,11 +718,13 @@ function extractAddressee(message, collage, Mabling) {
                     </div>
                 </div>
             `;
+            
             card.addEventListener("click", () => {
               highlightCardInSidebar(oid, layerView, layer);
               setTimeout(() => { window.location.href = `detail.html?id=${oid}`; }, 300);
             });
             listContainer.appendChild(card);
+            
             layer.queryAttachments({ objectIds: [oid] }).then(attachments => {
                 if (attachments[oid]?.length > 0) document.getElementById(`img-${oid}`).src = attachments[oid][0].url;
             });
@@ -846,57 +895,6 @@ function extractAddressee(message, collage, Mabling) {
             window.location.href = "index.html"; // トップページへ移動
         });
     }
-
-    // --- ★追加：鑑賞済みの場所に「温かい光」を灯す関数 ---
-  async function updateViewedGlows() {
-      // 1. 鑑賞済みリストを取得
-      const viewedList = JSON.parse(localStorage.getItem("bousai_viewed") || "[]");
-      if (viewedList.length === 0) return;
-
-      // 2. ピンのレイヤーを探す
-      const layer = webMap2D.allLayers.find(l => l.title === "survey");
-      if (!layer) return;
-
-      // ★隠したいIDリスト（ここでも念のため除外！）
-      const hiddenIds = [23, 25, 26, 27, 28];
-      const validViewedList = viewedList.filter(id => !hiddenIds.includes(id));
-
-      if (validViewedList.length === 0) return;
-
-      // 3. 鑑賞済みの場所の座標データを取得
-      const query = layer.createQuery();
-      query.objectIds = validViewedList;
-      query.returnGeometry = true;
-      
-      try {
-          const results = await layer.queryFeatures(query);
-          glowLayer.removeAll(); // 一回クリアして描き直す
-
-          // 温かい光のシンボル定義（ふんわりオレンジ）
-          const glowSymbol = {
-              type: "simple-marker",
-              style: "circle",
-              color: [255, 183, 77, 0.6], // オレンジ色（透明度60%）
-              size: "28px", // ピンよりひと回り大きく！
-              outline: {
-                  color: [255, 255, 255, 0.4],
-                  width: 0.5
-              }
-          };
-
-          // 4. 光を配置していく
-          results.features.forEach(feature => {
-              const g = new Graphic({
-                  geometry: feature.geometry,
-                  symbol: glowSymbol
-              });
-              glowLayer.add(g);
-          });
-          
-      } catch (e) {
-          console.error("光の描画に失敗", e);
-      }
-  }
 
   initializeApp();
 });
