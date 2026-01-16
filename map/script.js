@@ -892,7 +892,7 @@ function extractAddressee(message, collage, Mabling) {
     const backBtn = document.getElementById("back-to-top-btn");
     if (backBtn) {
         backBtn.addEventListener("click", () => {
-            window.location.href = "index.html"; // トップページへ移動
+            window.location.href = "../index.html"; // トップページへ移動
         });
     }
 
