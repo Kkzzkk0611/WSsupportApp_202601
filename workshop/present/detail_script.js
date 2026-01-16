@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function() {
       },
       {
         title: "防災行動",
-        desc: "はられた図形には<strong>『コラージュ』技法</strong>が使われ、危険から身を守るための大切な行動が表現されています。",
+        desc: "背景の模様に図形を貼る<strong>『コラージュ』技法</strong>が使われ、作者が伝えたい防災行動が表現されています。",
         img: "tutorial_d_03.png"
       },
       {
