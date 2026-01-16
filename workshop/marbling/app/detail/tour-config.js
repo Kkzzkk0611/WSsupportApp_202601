@@ -36,11 +36,21 @@ export const GUIDE = {
           advance: { mode: "next" }
         },
         {
+          id: "eraser",
+          type: "spotlight",
+          target: "#ctrl-eraser",  // ←ここをあなたの消しゴムボタンのIDに合わせて変更
+          content: {
+            title: "消しゴム",
+            body: "消しゴムをONにすると、塗った色を消すことができます。"
+          },
+          advance: { mode: "next" }
+        },
+        {
           id: "stroke",
           type: "spotlight",
           targets: ["main#stage canvas", "#ctrl-mode-paint"],
           box: "multi",
-          content: { title: "線を描こう", body: "「絵の具を塗る」を選択し、キャンバス上をドラッグすると線を描けます。" },
+          content: { title: "線を描こう", body: "「色を塗る」を選択し、キャンバス上をドラッグすると線を描けます。" },
           advance: { mode: "next" }
         }
       ]

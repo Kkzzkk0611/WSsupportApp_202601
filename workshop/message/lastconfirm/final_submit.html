@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FINAL STEP | 最終確認・提出</title>
-    <link rel="stylesheet" href="final_submit_styles.css?v=1.0.0">
+    <link rel="stylesheet" href="final_submit_styles.css?v=2.0.0">
     <!-- Leaflet (map preview) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -13,122 +13,181 @@
     <!-- Main Container -->
     <div class="container">
         
+        <!-- Progress Navigation Tabs -->
+        <nav class="progress-tabs">
+            <button class="tab-item" data-page="hazard" onclick="navigateToPage('hazard')">
+                <span class="tab-number">1</span>
+                <span class="tab-label">対象地点/<br>ハザード</span>
+                <span class="tab-badge warning" id="badge-hazard" style="display:none;">⚠</span>
+            </button>
+            <button class="tab-item" data-page="marbling" onclick="navigateToPage('marbling')">
+                <span class="tab-number">2</span>
+                <span class="tab-label">マーブリング</span>
+                <span class="tab-badge warning" id="badge-marbling" style="display:none;">⚠</span>
+            </button>
+            <button class="tab-item" data-page="collage" onclick="navigateToPage('collage')">
+                <span class="tab-number">3</span>
+                <span class="tab-label">コラージュ</span>
+                <span class="tab-badge warning" id="badge-collage" style="display:none;">⚠</span>
+            </button>
+            <button class="tab-item" data-page="artwork" onclick="navigateToPage('artwork')">
+                <span class="tab-number">4</span>
+                <span class="tab-label">作品情報</span>
+                <span class="tab-badge warning" id="badge-artwork" style="display:none;">⚠</span>
+            </button>
+            <button class="tab-item active" data-page="final">
+                <span class="tab-number">5</span>
+                <span class="tab-label">最終確認</span>
+            </button>
+        </nav>
+
         <!-- Header Section -->
         <header class="final-header">
             <div class="step-badge">FINAL STEP</div>
             <h1 class="main-title">最終確認・提出</h1>
-            <p class="subtitle">入力した内容を確認し、作品集マップに登録します</p>
+            <p class="subtitle">入力した内容を確認し、防災行動マップに登録します</p>
         </header>
 
-        <!-- Important Notice -->
-        <div class="notice-banner">
-            <div class="notice-icon">⚠️</div>
-            <div class="notice-content">
-                <h3 class="notice-title">この内容は作品集マップに公開されます</h3>
-                <p class="notice-text">送信後は編集できません。内容をよく確認してから送信してください。</p>
+        <!-- Step 1: Data Summary -->
+        <section class="step-section" id="step-summary">
+            <div class="step-header">
+                <div class="step-icon">📋</div>
+                <h2 class="step-title">Step 1: あなたの入力内容</h2>
             </div>
-        </div>
-
-        <!-- Checklist Section -->
-        <section class="checklist-section">
-            <h2 class="section-title">📋 提出前のチェックリスト</h2>
-            <div class="checklist">
-                <div class="checklist-item">
-                    <div class="check-number">1</div>
-                    <div class="check-content">
-                        <h4>入力内容の確認</h4>
-                        <p>ハザードマップ、マーブリング、コラージュ、メッセージの内容が正しいか確認してください</p>
-                    </div>
+            
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3 class="summary-label">🗺️ 対象地点</h3>
+                    <div id="summary-location" class="summary-value">読込中...</div>
+                    <div id="summary-map" class="summary-map"></div>
                 </div>
-                <div class="checklist-item">
-                    <div class="check-number">2</div>
-                    <div class="check-content">
-                        <h4>作品画像のアップロード</h4>
-                        <p>Survey123の画面内で作品のスクリーンショットをアップロードしてください</p>
-                    </div>
+                
+                <div class="summary-card">
+                    <h3 class="summary-label">⚠️ 選択したハザードマップ</h3>
+                    <div id="summary-hazards" class="summary-value">読込中...</div>
                 </div>
-                <div class="checklist-item">
-                    <div class="check-number">3</div>
-                    <div class="check-content">
-                        <h4>送信ボタンをクリック</h4>
-                        <p>Survey123画面の最下部にある「送信」ボタンをクリックして登録を完了してください</p>
-                    </div>
+                
+                <div class="summary-card">
+                    <h3 class="summary-label">🎨 マーブリング作品の意図</h3>
+                    <div id="summary-marbling" class="summary-value">読込中...</div>
+                </div>
+                
+                <div class="summary-card">
+                    <h3 class="summary-label">✂️ コラージュ作品の意図</h3>
+                    <div id="summary-collage" class="summary-value">読込中...</div>
+                </div>
+                
+                <div class="summary-card">
+                    <h3 class="summary-label">💬 作品タイトル</h3>
+                    <div id="summary-title" class="summary-value">読込中...</div>
+                </div>
+                
+                <div class="summary-card">
+                    <h3 class="summary-label">✍️ 制作者名（ペンネーム）</h3>
+                    <div id="summary-creator" class="summary-value">読込中...</div>
                 </div>
             </div>
         </section>
 
-        <!-- Action Buttons -->
-        <div class="action-section">
-            <button class="btn btn-secondary" onclick="goBack()">
-                ← 内容を修正する
-            </button>
-            <button class="btn btn-primary" onclick="openSurvey123()">
-                📝 Survey123で確認・提出する →
-            </button>
-        </div>
-
-        <!-- Survey123 Iframe Container -->
-        <div id="survey-container" class="survey-container" style="display: none;">
-            <div class="survey-header">
-                <h3>📝 Survey123 - 作品登録フォーム</h3>
-                <p class="survey-note">入力内容が自動で反映されています。確認後、画面下の「送信」ボタンをクリックしてください。</p>
-                <button class="btn-close" onclick="closeSurvey()">✕ 閉じる</button>
+        <!-- Step 3: Survey123 Submission -->
+        <section class="step-section" id="step-survey">
+            <div class="step-header">
+                <div class="step-icon">📤</div>
+                <h2 class="step-title">Step 2: Survey123で送信</h2>
             </div>
-            <div class="iframe-wrapper">
-                <iframe 
-                    id="survey-iframe" 
-                    frameborder="0" 
-                    allowfullscreen
-                    allow="geolocation; camera; microphone"
-                ></iframe>
-            </div>
-        </div>
 
-        <!-- Fallback Message -->
-        <div id="fallback-message" class="fallback-message" style="display: none;">
-            <div class="fallback-content">
-                <h3>🔄 Survey123を開いています...</h3>
-                <p>自動で開かない場合は、下のボタンをクリックしてください</p>
-                <button class="btn btn-primary" onclick="openSurvey123InNewTab()">
-                    🔗 Survey123を新しいタブで開く
+            <div class="survey-instructions">
+                <h3 class="instructions-title">送信の手順</h3>
+                <ol class="instructions-list">
+                    <li>下の「Survey123を開く」ボタンをクリック</li>
+                    <li>入力内容が自動で反映されていることを確認</li>
+                    <li>作品画像をアップロード</li>
+                    <li>内容を最終確認</li>
+                    <li>Survey123画面の「送信」ボタンをクリック</li>
+                </ol>
+            </div>
+
+            <!-- Survey123で手入力が必要な項目（注意） -->
+            <div class="alert-card warning" id="survey-manual-note">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-content">
+                <h3 class="alert-title">この3点はSurvey123で手入力してください</h3>
+                <ul class="missing-list" id="manual-items-list">
+                <li>作品制作日（Survey123内で入力）</li>
+                <li>ハザードマップ（複数選択の場合、足りない分を追記）</li>
+                <li>作品画像のアップロード（添付から追加）</li>
+                </ul>
+                <p class="info-note">
+                ※このページで入力しても自動反映されないため、Survey123のフォーム内で入力してください。
+                </p>
+            </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-section">
+                <button class="btn btn-large btn-primary" onclick="openSurvey123()" id="btn-open-survey">
+                    📝 Survey123を開く →
                 </button>
             </div>
-        </div>
 
-        <!-- Data Preview (Hidden by default) -->
-        <details class="data-preview">
-            <summary>🔍 送信するデータの詳細を確認</summary>
-            <div class="data-content">
-                <div class="data-item">
-                    <h4>使用したハザードマップ</h4>
-                    <div id="preview-hazards" class="data-value">-</div>
+            <!-- Survey123 Iframe Container -->
+            <div id="survey-container" class="survey-container" style="display: none;">
+                <div class="survey-header">
+                    <div>
+                        <h3>📝 Survey123 - 作品登録フォーム</h3>
+                        <p class="survey-note">入力内容が自動で反映されています。確認後、画面下の「送信」ボタンをクリックしてください。</p>
+                    </div>
+                    <button class="btn-close" onclick="closeSurvey()">✕ 閉じる</button>
                 </div>
-                <div class="data-item">
-                    <h4>対象地点</h4>
-                    <div id="preview-map" class="preview-map"></div>
-                </div>
-                <div class="data-item">
-                    <h4>マーブリング作品の記録</h4>
-                    <div id="preview-marbling" class="data-value">-</div>
-                </div>
-                <div class="data-item">
-                    <h4>コラージュ作品の記録</h4>
-                    <div id="preview-collage" class="data-value">-</div>
-                </div>
-                <div class="data-item">
-                    <h4>作品タイトル（メッセージ）</h4>
-                    <div id="preview-message" class="data-value">-</div>
-                </div>
-                <div class="data-item">
-                    <h4>制作者名（ペンネーム）</h4>
-                    <div id="preview-creator" class="data-value">-</div>
+                <div class="iframe-wrapper">
+                    <iframe 
+                        id="survey-iframe" 
+                        frameborder="0" 
+                        allowfullscreen
+                        allow="geolocation; camera; microphone"
+                    ></iframe>
                 </div>
             </div>
-        </details>
+
+            <!-- Completion Confirmation -->
+            <div class="completion-check" id="completion-check" style="display:none;">
+                <div class="check-card">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="checkbox-submitted" onchange="handleCompletionCheck()">
+                        <span class="checkbox-text">
+                            ✅ Survey123で「送信」ボタンを押して、送信が完了しました
+                        </span>
+                    </label>
+                    <p class="check-help">送信が完了したら、上のチェックボックスにチェックを入れてください</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 4: Completion Message (hidden until checkbox is checked) -->
+        <section class="step-section success-section" id="step-complete" style="display:none;">
+            <div class="success-card">
+                <div class="success-icon">🎉</div>
+                <h2 class="success-title">作品が防災行動マップに登録されました！</h2>
+                <p class="success-message">
+                    あなたの作品が、防災への気づきを共有する作品集マップに追加されました。<br>
+                    次のステップとして、防災行動を計画しましょう。
+                </p>
+                <div class="next-action">
+                    <button class="btn btn-large btn-success" onclick="goToNextAction()">
+                        🚀 次の防災行動マップへ →
+                    </button>
+                </div>
+                <div class="additional-links">
+                    <a href="#" class="link-secondary" onclick="goHome(); return false;">🏠 トップページへ戻る</a>
+                </div>
+            </div>
+        </section>
+
+
 
     </div>
 
     <!-- Scripts -->
-    <script src="final_submit_script.js?v=1.0.0"></script>
+    <script src="final_submit_script.js?v=2.0.0"></script>
 </body>
 </html>

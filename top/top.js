@@ -615,6 +615,6 @@ if (closeChatPopup) {
 // 「使ってみる」ボタン → ご近所アートページに遷移
 if (goChatBtn) {
   goChatBtn.addEventListener("click", () => {
-    window.location.href = "/gp/gp.html";
+    window.location.href = "/gp/index.html";
   });
 }

@@ -3,29 +3,46 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin:0; background:var(--bg); color:var(--ink); font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; }
 
+/* ============== ヘッダー（基本） ============== */
 .ws-header {
-  position: sticky; top:0; z-index:1000; background:rgba(255,255,255,0.9);
+  position: sticky; top:0; z-index:1000; background:rgba(255,255,255,0.95);
   backdrop-filter: blur(6px);
   display:flex; align-items:center; gap:12px; padding:10px 14px;
   border-bottom:1px solid #ddd;
   color:#222;
 }
-.ws-header .left { font-weight:600; }
-.ws-header .center { flex:1; text-align:center; opacity:.9; }
-.ws-header .right { display:flex; gap:8px; }
-/* === ヘッダー内のボタン（白トーンに統一） === */
+.ws-header .left { 
+  flex: 0 0 auto;
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+  padding-right: 16px;
+}
+.ws-header .center { 
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.ws-header .right { 
+  display:flex; 
+  gap:8px;
+  flex: 0 0 auto;
+}
+
+/* === ヘッダー内のボタン === */
 .ws-header .right .btn {
-  background: #ffffff;               /* 白背景 */
-  color: #222222;                    /* 黒文字 */
-  border: 1px solid #cccccc;         /* 薄いグレー枠 */
+  background: #ffffff;
+  color: #222222;
+  border: 1px solid #cccccc;
   padding: 8px 12px;
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  white-space: nowrap;
 }
 
-/* ホバー時の反転 */
 .ws-header .right .btn:hover {
   background: #f2f2f2;
   border-color: #aaaaaa;
@@ -38,22 +55,81 @@ html, body { height: 100%; margin:0; background:var(--bg); color:var(--ink); fon
   border: none;
 }
 
-/* 「次へ▶」ホバー時に少し濃く */
 .ws-header .right .btn.accent:hover {
-  background: #16a34a; /* 少し濃い緑 */
+  background: #16a34a;
 }
 
+/* ============== ★★★ 新規追加：ステップインジケーター ★★★ ============== */
+/* 体験ページのヘッダー中央に表示する進捗表示 */
+.ws-stepper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 0;
+}
 
-.timerbar { position:absolute; left:0; right:0; bottom:-2px; height:2px; background:linear-gradient(90deg, var(--accent), #7CFC00); }
+.ws-stepper__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.5; /* 未完了は薄く */
+  transition: opacity 0.2s ease;
+}
+
+.ws-stepper__item.done {
+  opacity: 1; /* 完了済みは濃く */
+}
+
+.ws-stepper__dot {
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #999;
+  transition: color 0.2s ease;
+}
+
+.ws-stepper__item.done .ws-stepper__dot {
+  color: var(--accent); /* 完了は緑 */
+}
+
+.ws-stepper__label {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  text-align: center;
+  color: #666;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.ws-stepper__item.done .ws-stepper__label {
+  color: #222;
+  font-weight: 600;
+}
+
+/* モバイル対応：ラベルを隠してドットのみ表示 */
+@media (max-width: 768px) {
+  .ws-stepper {
+    gap: 12px;
+  }
+  .ws-stepper__label {
+    display: none;
+  }
+  .ws-stepper__dot {
+    font-size: 1.2rem;
+  }
+}
+
+/* ============== タイマー関連は完全削除 ============== */
+/* （要件：タイマーは不要のため削除） */
 
 main.stage { min-height: calc(100dvh - 56px); padding:16px; }
 .page { max-width:1200px; margin:0 auto; }
 
-/* === 「このセクションのミッション」モーダル === */
+/* === 「このセクションのミッション」モーダル（削除しないが体験ページでは使わない） === */
 .help-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.25);  /* 透過の黒を少し明るめに変更 */
+  background: rgba(0,0,0,.25);
   display: none;
   place-items: center;
   z-index: 2000;
@@ -61,12 +137,12 @@ main.stage { min-height: calc(100dvh - 56px); padding:16px; }
 
 .help-card {
   width: min(680px, 92vw);
-  background: #ffffff;              /* 白背景 */
-  border: 2px solid #000000;        /* 黒い外枠 */
+  background: #ffffff;
+  border: 2px solid #000000;
   border-radius: 16px;
   padding: 24px;
-  color: #000000;                   /* 文字も黒 */
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15); /* ほんの少し影 */
+  color: #000000;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 .help-card h2 {
@@ -77,7 +153,7 @@ main.stage { min-height: calc(100dvh - 56px); padding:16px; }
 
 .help-card p {
   line-height: 1.7;
-  opacity: 1;                      /* 黒文字でしっかり見えるように */
+  opacity: 1;
 }
 
 .help-card .actions {
@@ -99,7 +175,6 @@ main.stage { min-height: calc(100dvh - 56px); padding:16px; }
   background: #000;
   color: #fff;
 }
-
 
 .panel {
   position:fixed; top:0; right:0; width:min(70vw, 900px); height:100dvh;
@@ -162,95 +237,29 @@ main.stage { min-height: calc(100dvh - 56px); padding:16px; }
   margin-right: 4px;
 }
 
-
-/* ============== Timer UI ============== */
-.ws-header .right { display: flex; align-items: center; gap: 8px; }
-
-/* pill全体（右カラムの端に寄せる） */
-.ws-timer{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ffffffcc, #ffffffa8);
-  box-shadow: 0 1px 0 #e5e7eb inset, 0 1px 2px rgba(0,0,0,.04);
-  backdrop-filter: blur(4px);
-}
-
-/* 目安バッジ */
-.ws-timer__badge{
-  font-size: .85rem;
-  line-height: 1;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #eef6ff;
-  color: #1d4ed8;
-  border: 1px solid #dbeafe;
-  white-space: nowrap;
-}
-
-/* 時計 */
-.ws-timer__clock{
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  letter-spacing: .02em;
-  min-width: 56px;
-  text-align: right;
-}
-
-/* ゴーストボタン（小さめで主張しない） */
-.btn.ghost{
-  background: transparent;
-  border: 1px solid #e5e7eb;
-  color: #374151;
-  padding: 4px 8px;
-  line-height: 1;
-  border-radius: 8px;
-}
-.btn.ghost:hover{ background:#f9fafb; }
-
-/* 進捗バー（既存をリファイン） */
-.timerbar{
-  height: 4px;
-  background: linear-gradient(90deg,#10b981,#3b82f6);
-  transition: width .25s linear;
-  border-bottom-left-radius: 2px;
-  border-bottom-right-radius: 2px;
-}
-
-/* 残り少ないときの色（warn/danger） */
-.ws-timer.is-warn .ws-timer__badge{ background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
-.ws-timer.is-danger .ws-timer__badge{ background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
-.timerbar.is-warn{ background: linear-gradient(90deg,#f59e0b,#ef4444); }
-.timerbar.is-danger{ background: #ef4444; }
-
-
 /* === パネルのレイアウト（モーダル全体） === */
 .ws-panel {
   position: fixed;
-  inset: 0;                  /* top/right/bottom/left:0 と同じ */
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;             /* 画面端の余白 */
+  padding: 24px;
   background: rgba(0,0,0,.35);
   z-index: 1000;
 }
 
-/* カード本体（最大高さを作って、中身を縦flex） */
 .ws-panel__card {
   width: min(960px, 92vw);
-  max-height: 92vh;          /* ★ ここで高さ上限を作る */
+  max-height: 92vh;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0,0,0,.15);
   display: flex;
-  flex-direction: column;    /* ヘッダー／本文／フッターを縦に並べる */
-  overflow: hidden;          /* 角丸からはみ出さないように */
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* 固定ヘッダー＆フッター。本文との境界も見やすく */
 .ws-panel__head {
   padding: 14px 18px;
   border-bottom: 1px solid #eef0f3;
@@ -262,18 +271,15 @@ main.stage { min-height: calc(100dvh - 56px); padding:16px; }
   flex: 0 0 auto;
 }
 
-/* ★ スクロールする本文エリア */
 .ws-panel__body {
   padding: 16px 18px;
-  flex: 1 1 auto;            /* 余白分を全て本文に渡す */
-  overflow: auto;            /* ← これで本文だけスクロール */
-  -webkit-overflow-scrolling: touch; /* iOS慣性スクロール */
-  overscroll-behavior: contain;      /* バウンスで背面が動かないように */
+  flex: 1 1 auto;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
-/* パネル表示中は背面のページをスクロールさせない */
 html.body-lock, body.body-lock { overflow: hidden; }
 
-/* チップ等が横に長い場合の折返し */
 .ws-panel__body .chip { white-space: nowrap; }
 .ws-panel__body p, .ws-panel__body li { overflow-wrap: anywhere; }

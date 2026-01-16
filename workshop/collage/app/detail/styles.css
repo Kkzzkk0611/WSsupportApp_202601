@@ -307,3 +307,86 @@ main { overflow: hidden; }
   touch-action: none;           /* 念のため canvas 本体にも */
 }
 
+/* swatchボタンはCSS変数 --swatch-color で塗る */
+.swatches .swatch{
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,0.15);
+  background: var(--swatch-color, #ffffff);
+  padding: 0;
+  cursor: pointer;
+}
+
+.swatches .swatch.is-active{
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ===== パレット select（カスタム） ===== */
+#palette-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 100%;
+  height: 42px;
+  padding: 0 40px 0 12px;
+
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%);
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 500;
+
+  box-shadow:
+    0 1px 2px rgba(2, 6, 23, 0.06),
+    0 8px 24px rgba(2, 6, 23, 0.06);
+
+  cursor: pointer;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background .18s ease,
+    transform .08s ease;
+}
+
+/* ▼アイコン（CSSだけで描画） */
+#palette-select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, #64748b 50%),
+    linear-gradient(135deg, #64748b 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 17px,
+    calc(100% - 12px) 17px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* hover */
+#palette-select:hover {
+  border-color: rgba(15, 23, 42, 0.22);
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+}
+
+/* focus */
+#palette-select:focus-visible {
+  outline: none;
+  border-color: rgba(34,197,94,.6);
+  box-shadow:
+    0 0 0 3px rgba(34,197,94,.25),
+    0 8px 24px rgba(2, 6, 23, 0.08);
+}
+
+/* active（押した感） */
+#palette-select:active {
+  transform: translateY(1px);
+}
+
+/* option（Safari対策で最低限） */
+#palette-select option {
+  color: #0f172a;
+}

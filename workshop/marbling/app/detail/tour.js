@@ -230,13 +230,17 @@ class Tour {
     this.pop = document.createElement("div");
     this.pop.className = "tour-popover";
     this.pop.innerHTML = `
+      <button class="tour-popover__skip" data-act="skip" aria-label="スキップ">終了</button>
+
       <div class="tour-popover__title"></div>
       <div class="tour-popover__body"></div>
+
       <div class="tour-popover__actions">
-        <button data-act="prev" disabled>前へ</button>
+        <button data-act="prev" disabled>戻る</button>
+        <div class="tour-popover__indicator" aria-live="polite"></div>
         <button data-act="next">次へ</button>
-        <button data-act="skip" aria-label="スキップ">終了</button>
-      </div>`;
+      </div>
+    `;
     document.body.appendChild(this.pop);
 
     this.outlineLayer = document.createElement("div");
@@ -265,6 +269,36 @@ class Tour {
     const btnPrev = this.pop.querySelector('button[data-act="prev"]');
     const btnNext = this.pop.querySelector('button[data-act="next"]');
     const btnSkip = this.pop.querySelector('button[data-act="skip"]');
+    const chapter = this.chapters[this.ci];
+    if (indicator && chapter) {
+      indicator.textContent = `${this.si + 1} / ${chapter.steps.length}`;
+    }
+    // actions（下部バー）
+    const actions = this.pop.querySelector(".tour-popover__actions");
+    if (actions) {
+      actions.style.display = "flex";
+      actions.style.alignItems = "center";
+      actions.style.justifyContent = "space-between";
+      actions.style.gap = "12px";
+      actions.style.marginTop = "12px";
+    }
+
+    // インジケーター（中央）
+    const indicator = this.pop.querySelector(".tour-popover__indicator");
+    if (indicator) {
+      indicator.style.flex = "1";
+      indicator.style.textAlign = "center";
+      indicator.style.opacity = "0.8";
+      indicator.style.fontSize = "14px";
+    }
+
+    // スキップ（右上）
+    const skip = this.pop.querySelector(".tour-popover__skip");
+    if (skip) {
+      skip.style.position = "absolute";
+      skip.style.top = "10px";
+      skip.style.right = "10px";
+    }
 
     btnNext.onclick = onNext;
     btnSkip.onclick = onSkip;
@@ -280,9 +314,21 @@ class Tour {
     btnSkip.style.display = showSkip ? "" : "none";
 
     this.pop.style.position = "fixed";
-    this.pop.style.bottom = "16px";
-    this.pop.style.left   = "50%";
+    this.pop.style.left = "50%";
     this.pop.style.transform = "translateX(-50%)";
+    this.pop.style.top = "";
+    this.pop.style.bottom = "calc(16px + env(safe-area-inset-bottom, 0px))";
+    // サイズ感（好みで調整OK）
+    this.pop.style.width = "min(92vw, 560px)";
+    this.pop.style.maxWidth = "560px";
+    this.pop.style.padding = "18px 18px 14px";
+    this.pop.style.fontSize = "16px";
+    this.pop.style.borderRadius = "16px";
+    const body = this.pop.querySelector(".tour-popover__body");
+    if (body) body.style.lineHeight = "1.6";
+    // 表示をON（CSSが display:none 前提でも確実に出す）
+    this.pop.style.display = "block";
+    this.pop.classList.add("is-open"); 
   }
 
   // 複数要素の外接矩形
@@ -411,6 +457,7 @@ class Tour {
   }
 
   clearStep() {
+    this.pop?.classList.remove("is-open");
     this.cleanupFns.splice(0).forEach(fn => { try { fn(); } catch {} });
     if (this.outlineLayer) this.outlineLayer.innerHTML = "";
     this.outlines = [];

@@ -182,18 +182,6 @@ if (saveWorkBtn) {
   });
 }
 
-// アップロード
-const fileInput = document.getElementById('fileInput');
-fileInput.addEventListener('change', async (e)=>{
-  const file = e.target.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  baseImg = await loadImage(url);
-  computeContain();
-  stamps.length = 0; selectedIndex = -1; history.stack=[]; history.index=-1;
-  render(); refreshUndoRedo();
-});
-
 // 画像×色 の結果をキャッシュ
 const tintCache = new Map();
 
@@ -412,41 +400,150 @@ const alphaEl = document.getElementById('alpha');
 const alphaOut = document.getElementById('alphaOut');
 const colorEl  = document.getElementById('color');
 const colorOut = document.getElementById('colorOut');
-
-
-// ▼ 既存 colorEl / colorOut を利用する前提
 const colorPreview = document.getElementById('colorPreview');
-const swatchesEl   = document.getElementById('swatches');
 
-// スウォッチに色を塗る
-if (swatchesEl) {
-  swatchesEl.querySelectorAll('.swatch').forEach(btn => {
-    const c = btn.getAttribute('data-color');
-    btn.style.background = c;
-    btn.addEventListener('click', () => {
-      if (!colorEl) return;
-      colorEl.value = c;
-      // 既存の着色ロジックを流用
-      colorEl.dispatchEvent(new Event('input', { bubbles: true }));
-      colorEl.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-  });
-}
 
-// 表示（テキスト＆丸プレビュー）を同期
+// --- パレット（マーブリングと同じ） ---
+const PALETTES = {
+  Basic: ['#FF3B30','#FF9500','#FFCC00','#34C759','#007AFF','#5856D6','#FF2D55'],
+  Pastel: ['#FFD1DC','#B5EAD7','#C7CEEA','#FFDAC1','#E2F0CB','#B5B9FF','#FFB7B2','#FF9CEE','#B28DFF'],
+  Warm:   ['#FF3B30','#FF9500','#FFCC00','#FFB7B2','#FFD1DC','#FF9CEE','#FFDAC1','#FF2D55','#FF5E3A'],
+  Cool:   ['#007AFF','#34C759','#5856D6','#B5EAD7','#B5B9FF','#C7CEEA','#E2F0CB','#A0CED9','#5AC8FA']
+};
+
+const COLOR_NAMES = {
+  '#000000':'黒','#ffffff':'白','#FF3B30':'赤','#FF9500':'オレンジ','#FFCC00':'黄','#34C759':'緑','#007AFF':'青','#5856D6':'紫','#FF2D55':'ピンク',
+  '#FFD1DC':'パステルピンク','#B5EAD7':'パステルグリーン','#C7CEEA':'パステルブルー','#FFDAC1':'パステルオレンジ','#E2F0CB':'パステルイエロー','#B5B9FF':'パステルパープル','#FFB7B2':'パステルレッド','#FF9CEE':'パステルライトピンク','#B28DFF':'パステルバイオレット',
+  '#FF5E3A':'ライトオレンジ','#A0CED9':'ライトブルー','#5AC8FA':'ライトシアン'
+};
+
+const paletteSelect = document.getElementById('palette-select');
+const swatchesEl = document.getElementById('swatches');
+
+// marblingと同じキー名で保存（ページ間で色を揃えたいならこれが楽）
+let paletteName  = localStorage.getItem('paletteName')  || 'Basic';
+let lastColorHex = localStorage.getItem('lastColorHex') || null;
+
+if (paletteSelect) paletteSelect.value = paletteName;
+
+// 表示（テキスト＆丸プレビュー）を同期：既存のupdateColorUIがあるならそれを使ってOK
 function updateColorUI(hex) {
   if (colorOut)     colorOut.textContent = hex.toUpperCase();
   if (colorPreview) colorPreview.style.background = hex;
 }
-// 初期反映
-if (colorEl) updateColorUI(colorEl.value);
 
-// 既存の colorEl リスナーはそのまま使用（render/pushHistory は既に書いてある）
-// もし colorEl の input リスナー内で colorOut を更新しているなら、下行だけ追加：
-if (colorEl) {
-  colorEl.addEventListener('input', () => updateColorUI(colorEl.value));
+// swatchesを生成
+function renderSwatches(palette, selectedHex) {
+  if (!swatchesEl) return;
+  swatchesEl.innerHTML = '';
+
+  PALETTES[palette].forEach(hex => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'swatch';
+    btn.setAttribute('role','option');
+    btn.setAttribute('tabindex','0');
+    btn.setAttribute('aria-label', COLOR_NAMES[hex] || hex);
+    btn.setAttribute('data-color', hex);
+    btn.style.setProperty('--swatch-color', hex);
+    btn.setAttribute('aria-selected', selectedHex === hex ? 'true' : 'false');
+    if (selectedHex === hex) btn.classList.add('is-active');
+
+    btn.addEventListener('click', () => {
+      if (!colorEl) return;
+      colorEl.value = hex;
+      updateColorUI(hex);
+      localStorage.setItem('lastColorHex', hex);
+
+      // ★コラージュ反映：選択中スタンプがあれば色を更新して再描画
+      if (selectedIndex >= 0) {
+        stamps[selectedIndex].color = hex;
+        render();
+      }
+
+      updateSwatchActive(hex);
+    });
+
+    btn.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); btn.nextElementSibling?.focus(); }
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); btn.previousElementSibling?.focus(); }
+      if (e.key === 'Enter' || e.key === ' ') btn.click();
+    });
+
+    swatchesEl.appendChild(btn);
+  });
 }
 
+function updateSwatchActive(hex) {
+  if (!swatchesEl) return;
+  Array.from(swatchesEl.children).forEach(btn => {
+    const btnHex = btn.getAttribute('data-color');
+    const active = (btnHex === hex);
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+}
+
+// パレット変更
+if (paletteSelect) {
+  paletteSelect.addEventListener('change', () => {
+    paletteName = paletteSelect.value;
+    localStorage.setItem('paletteName', paletteName);
+
+    let currentHex = colorEl ? colorEl.value : null;
+    if (!currentHex || !PALETTES[paletteName].includes(currentHex)) {
+      currentHex = PALETTES[paletteName][0];
+      if (colorEl) colorEl.value = currentHex;
+    }
+
+    updateColorUI(currentHex);
+    renderSwatches(paletteName, currentHex);
+    updateSwatchActive(currentHex);
+
+    // 選択中スタンプがあれば即反映
+    if (selectedIndex >= 0) {
+      stamps[selectedIndex].color = currentHex;
+      render();
+    }
+  });
+}
+
+// 初期化（色・パレット復元）
+if (colorEl) {
+  let initialHex = lastColorHex || colorEl.value || '#FF3B30';
+  if (!PALETTES[paletteName].includes(initialHex)) initialHex = PALETTES[paletteName][0];
+
+  colorEl.value = initialHex;
+  updateColorUI(initialHex);
+  renderSwatches(paletteName, initialHex);
+  updateSwatchActive(initialHex);
+}
+
+// カラーピッカー側の変更（手で自由色を選んだ時）
+if (colorEl) {
+  colorEl.addEventListener('input', () => {
+    const hex = colorEl.value;
+    updateColorUI(hex);
+    localStorage.setItem('lastColorHex', hex);
+
+    // パレット内ならハイライト、外なら解除（マーブリングと同じ）
+    if (PALETTES[paletteName].includes(hex)) updateSwatchActive(hex);
+    else updateSwatchActive(null);
+
+    if (selectedIndex >= 0) {
+      stamps[selectedIndex].color = hex;
+      render();
+    }
+  });
+
+  // 既存仕様：changeで履歴に積む（あなたのapp.jsの仕様に合わせる）
+  colorEl.addEventListener('change', () => {
+    if (selectedIndex >= 0) pushHistory();
+  });
+}
+
+// 初期反映
+if (colorEl) updateColorUI(colorEl.value);
 
 if (alphaEl) {
   alphaEl.addEventListener('change', () => {
@@ -886,4 +983,61 @@ window.addEventListener('keydown', (ev) => {
       currentStampId  = asset.id;
     }
   }
+});
+
+// ===== IndexedDB: 画像(Blob)を保存/読み込みする共通ヘルパー =====
+const DB_NAME = "ws_art_db";
+const STORE_NAME = "images";
+const KEY_LATEST_MARBLING = "latest_marbling_base";
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbSet(key, value) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function idbGet(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const req = tx.objectStore(STORE_NAME).get(key);
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// 例：コラージュ app.js の先頭〜 baseImg が定義されている付近に追加してOK
+async function loadMarblingBaseIfExists() {
+  const blob = await idbGet(KEY_LATEST_MARBLING);
+  if (!blob) return false;
+
+  const url = URL.createObjectURL(blob);
+  baseImg = await loadImage(url); // 既にあなたの app.js にある loadImage を使う :contentReference[oaicite:3]{index=3}
+  computeContain();
+  render();
+  refreshUndoRedo();
+  return true;
+}
+
+// 起動時に呼ぶ（DOMができてから）
+window.addEventListener("DOMContentLoaded", () => {
+  loadMarblingBaseIfExists().catch(console.error);
 });

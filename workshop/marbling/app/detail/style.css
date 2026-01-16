@@ -591,3 +591,129 @@ canvas {
   background-color: #dc2626;
   transform: scale(1.05);
 }
+
+
+/* === Tour (Improved) === */
+.tour-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+/* 背景を少しリッチに（暗幕 + ほんのりブラー） */
+.tour-dimmer{
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none; /* ツアー中でも操作できる設計のまま */
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(2px);
+}
+
+/* ポップアップ本体：中央に大きめカード */
+.tour-popover{
+  z-index: 10002;
+  width: min(560px, calc(100vw - 32px));
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(255,255,255,.5);
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.30);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif;
+  letter-spacing: 0.01em;
+
+  /* ほんのりガラスっぽく */
+  backdrop-filter: blur(10px);
+
+  /* アニメ（好みで消してOK） */
+  transform: translate(-50%, -50%) scale(0.98);
+  opacity: 0;
+  transition: opacity .16s ease, transform .16s ease;
+}
+
+/* JSで表示した瞬間に“ふわっ”と出す */
+.tour-popover.is-open{
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.tour-popover__title{
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 1.25;
+  margin-bottom: 8px;
+  color: #0f172a;
+}
+
+.tour-popover__body{
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: #334155;
+  margin-bottom: 14px;
+}
+
+/* ボタン並び：右寄せ、見た目を整理 */
+.tour-popover__actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tour-popover__actions button{
+  appearance: none;
+  border: 1px solid rgba(15, 23, 42, .15);
+  background: rgba(248,250,252,.9);
+  color: #0f172a;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .08s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
+}
+
+.tour-popover__actions button:hover{
+  background: rgba(241,245,249,1);
+  border-color: rgba(15, 23, 42, .22);
+  transform: translateY(-1px);
+}
+
+.tour-popover__actions button:active{
+  transform: translateY(0px);
+}
+
+/* メイン（次へ）を強調 */
+.tour-popover__actions button[data-act="next"]{
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #0b1b10;
+}
+.tour-popover__actions button[data-act="next"]:hover{
+  filter: brightness(0.98);
+}
+
+/* 終了（skip）は目立ちすぎないように */
+.tour-popover__actions button[data-act="skip"]{
+  background: transparent;
+  border-color: rgba(15,23,42,.12);
+  color: rgba(15,23,42,.65);
+}
+
+.tour-popover__actions button[disabled]{
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* モバイル時：文字と余白を少し詰める */
+@media (max-width: 420px){
+  .tour-popover{
+    padding: 14px 14px;
+    border-radius: 16px;
+  }
+  .tour-popover__title{ font-size: 16px; }
+  .tour-popover__body{ font-size: 14px; }
+}

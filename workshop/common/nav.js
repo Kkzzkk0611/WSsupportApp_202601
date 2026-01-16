@@ -1,132 +1,85 @@
 // workshop/common/nav.js
+// ★★★ 改修版：体験ページ用ステップインジケーター対応 ★★★
 (function () {
   // 各ページで window.WS_STEP を定義しておく
-  var S = window.WS_STEP || { index: 0, total: 1, title: '', mission: '', next: null };
-  // ★追加：オプションのデフォルト
-  S.hideBack  = S.hideBack === true;                   // 戻るボタンを隠すか
+  var S = window.WS_STEP || { index: 0, total: 1, title: '', next: null };
+  
+  // ★★★ 新規追加：体験ページ表示制御 ★★★
+  // showHeader が false の場合はヘッダー自体を表示しない（ミッション/導入ページ用）
+  S.showHeader = S.showHeader !== false; // デフォルトは true（下位互換性維持）
+  
+  // ★★★ 新規追加：体験フロー情報 ★★★
+  // 体験ページで使用する進捗表示用の設定
+  S.flow = S.flow || null; // { current: 2, total: 4, labels: ['ハザードマップ', 'マーブリング', ...] }
+  
+  // 既存オプションのデフォルト
+  S.hideBack  = S.hideBack === true;
   S.nextLabel = (typeof S.nextLabel === 'string' && S.nextLabel.trim()) ? S.nextLabel : null;
 
-    // ▼ タイマーデフォルト（ページで未指定ならここが効く）
-  // ▼ タイマーデフォルト
-  S.timer = Object.assign({
-    enabled: true,       // ← 追加：既定は有効。ページ側で false にできる
-    minutes: 15,
-    mode: 'down',
-    autostart: true,
-    showClock: true,
-    showBar: true,
-    showControls: false,
-    warnAtSec: 60
-  }, S.timer || {});
+  // ★★★ タイマー機能は完全削除 ★★★
+  // （要件：タイマーは不要のため、関連コードを削除）
 
-  // ▼ 目安時間（文字）も enabled のときだけ作る
-  var TIMER_LABEL = S.timer.enabled ? ('目安 ' + (S.timer.minutes|0) + '分') : '';
+  // ★★★ showHeader が false の場合はここで終了（ヘッダーを生成しない） ★★★
+  if (!S.showHeader) {
+    console.log('[nav.js] showHeader=false のためヘッダーを非表示');
+    return; // ヘッダーを作らず終了
+  }
 
-
-  // --- ヘッダー ---
+  // --- ヘッダー生成 ---
   var header = document.createElement('header');
-    // ★追加：ボタンHTMLをフラグで切り替え
-  var backBtnHtml = S.hideBack ? '' : '<button class="btn" id="backBtn">◀ 戻る</button>';
-  var nextText    = S.nextLabel ? S.nextLabel : '次へ ▶';
-  var nextBtnHtml = S.next ? ('<button class="btn accent" id="nextBtn">' + nextText + '</button>') : '';
-
   header.className = 'ws-header';
-  header.innerHTML =
-    // 1) 左
-    '<div class="left">防災×市民科学×アート WS ' +
-          // ▼ タイマーは right の中に、enabled のときだけ
-      (S.timer.enabled ? (
-        '<div class="ws-timer" aria-label="セクションタイマー">' +
-          '<span class="ws-timer__badge" id="timerLabel">' + TIMER_LABEL + '</span>' +
-          (S.timer.showClock ? '<span class="ws-timer__clock" id="timerClock">--:--</span>' : '') +
-          (S.timer.showControls
-            ? '<button class="btn ghost" id="timerPlay"  title="開始/再開" aria-label="開始">▶</button>' +
-              '<button class="btn ghost" id="timerPause" title="一時停止" aria-label="一時停止">⏸</button>' +
-              '<button class="btn ghost" id="timerReset" title="リセット" aria-label="リセット">↺</button>'
-            : ''
-          ) +
+  
+  // ボタンHTML準備
+  var backBtnHtml = S.hideBack ? '' : '<button class="btn" id="backBtn">◀ 前のセクションに戻る</button>';
+  var nextText    = S.nextLabel ? S.nextLabel : '次のセクションへ ▶';
+  var nextBtnHtml = S.next ? ('<button class="btn accent" id="nextBtn">' + nextText + '</button>') : '';
+  // ★ 追加：地図ボタン（mapUrl があるページだけ表示）
+var mapBtnHtml = S.mapUrl
+  ? '<button class="btn" id="mapBtn">🗺 地図</button>'
+  : '';
+
+
+  // ★★★ 体験ページ用：ステップインジケーターHTML生成 ★★★
+  var stepperHtml = '';
+  if (S.flow && S.flow.total > 0) {
+    var dots = [];
+    for (var i = 1; i <= S.flow.total; i++) {
+      var isDone = i <= S.flow.current;
+      var label = S.flow.labels && S.flow.labels[i-1] ? S.flow.labels[i-1] : ('体験' + i);
+      dots.push(
+        '<div class="ws-stepper__item ' + (isDone ? 'done' : '') + '" title="' + label + '">' +
+          '<div class="ws-stepper__dot">' + (isDone ? '●' : '○') + '</div>' +
+          '<div class="ws-stepper__label">' + label + '</div>' +
         '</div>'
-      ) : '') +
-    '</div>' +
+      );
+    }
+    stepperHtml = '<div class="ws-stepper">' + dots.join('') + '</div>';
+  }
 
-    // 2) センター（タイトル）
-    '<div class="center">ステップ' + S.index + '/' + S.total + '：' + (S.title || '') + '</div>' +
-
-    // 3) 右（説明・地図・ワークシート → タイマー → 戻る/次へ の順）
+  // ★★★ ヘッダー構造（体験ページ版） ★★★
+  // 左：現在の体験名（タイトル）
+  // 中央：ステップインジケーター
+  // 右：戻る・次へボタンのみ（説明・地図・ワークシートボタンは表示しない）
+  header.innerHTML =
+    '<div class="left">' + (S.title || '') + '</div>' +
+    '<div class="center">' + stepperHtml + '</div>' +
     '<div class="right">' +
-      (S.mission   ? '<button class="btn" id="helpBtn">❓ 説明</button>' : '') +
-      (S.mapUrl    ? '<button class="btn" id="mapBtn">🗺 地図</button>' : '') +
-      (S.surveyUrl ? '<button class="btn" id="sheetBtn">📝 防災ワークシート</button>' : '') +
-
-
-
-      // 戻る / 次へ（変数を使っている前提。未導入なら元の固定HTMLに戻してOK）
+      mapBtnHtml +
       backBtnHtml +
       nextBtnHtml +
-    '</div>' +
-
-    // 4) タイムバー（enabled && showBar のときのみ）
-    (S.timer.enabled && S.timer.showBar ? '<div class="timerbar" id="timerbar"></div>' : '');
+    '</div>';
 
   document.body.prepend(header);
 
-  // --- 説明オーバーレイ ---
-  if (S.mission) {   // ←★ 追加：missionがあるページだけ生成する
-    var overlay = document.createElement('div');
-    overlay.className = 'help-overlay';
-    overlay.innerHTML =
-    '<div class="help-card">' +
-      '<h2>🧩 このセクションのミッション</h2>' +
-      (S.mission ? `
-        <h3>目的</h3>
-        <p>${S.mission.purpose}</p>
+  // ★★★ 説明オーバーレイ（Missionポップアップ）は完全削除 ★★★
+  // （要件：Missionポップアップは不要のため削除）
 
-        <h3>手順</h3>
-        <ol>${(S.mission.steps || []).map(s => `<li>${s}</li>`).join('')}</ol>
-
-        <h3>✅ 完了条件</h3>
-        <p>${S.mission.goal}</p>
-
-        ${
-          S.mission.examples ? `
-          <div class="examples">
-            ${S.mission.examples.actions ? `
-              <details open>
-                <summary>💡 ${S.mission.examples.actions.title}</summary>
-                <ul>${S.mission.examples.actions.items.map(x => `<li>${x}</li>`).join('')}</ul>
-              </details>` : ''}
-
-            ${S.mission.examples.actors ? `
-              <details>
-                <summary>👥 ${S.mission.examples.actors.title}</summary>
-                <ul>${S.mission.examples.actors.items.map(x => `<li>${x}</li>`).join('')}</ul>
-              </details>` : ''}
-          </div>` : ''
-        }
-      ` : '<p>このステップで行うことを確認しましょう。</p>') +
-      '<div class="actions"><button id="helpClose">閉じる</button></div>' +
-    '</div>';
-
-    document.body.appendChild(overlay);
-
-    function openHelp(){ overlay.style.display = 'grid'; }
-    function closeHelp(){ overlay.style.display = 'none'; }
-    var helpBtn = document.getElementById('helpBtn');
-    if (helpBtn) helpBtn.addEventListener('click', openHelp);
-    var helpClose = document.getElementById('helpClose');
-    if (helpClose) helpClose.addEventListener('click', closeHelp);
-
-    // ステップ入室時に自動表示（不要なら次行をコメントアウト）
-    openHelp();
-  }
-
-  // --- お知らせ（登録完了など） ---
+  // ★★★ お知らせ機能は維持（必要に応じて） ★★★
   if (S.notice) {
     var onceOkay = !(S.notice.onceKey && localStorage.getItem(S.notice.onceKey));
-    var needBtn  = S.notice.showButton !== false;                 // 既定: ボタン出す
-    var autoOpen = S.notice.autoOpen !== false && onceOkay;       // 既定: 初回は自動表示
+    var needBtn  = S.notice.showButton !== false;
+    var autoOpen = S.notice.autoOpen !== false && onceOkay;
 
-    // ヘッダーの右側に🔔ボタンを出す
     if (needBtn) {
       var right = header.querySelector('.right');
       var nbtn = document.createElement('button');
@@ -136,9 +89,8 @@
       right.insertBefore(nbtn, right.firstChild);
     }
 
-    // オーバーレイ（help-overlay の見た目を共用）
     var nlay = document.createElement('div');
-    nlay.className = 'help-overlay'; // 既存スタイルを使い回し
+    nlay.className = 'help-overlay';
     nlay.innerHTML =
       '<div class="help-card">' +
         '<h2>' + (S.notice.title || 'お知らせ') + '</h2>' +
@@ -153,7 +105,6 @@
     }
     function closeNotice(){ nlay.style.display = 'none'; }
 
-    // アクションボタン
     var actWrap = nlay.querySelector('#noticeActions');
     var acts = S.notice.actions || [{ label:'閉じる', type:'close' }];
     acts.forEach(function(a){
@@ -162,8 +113,6 @@
       b.textContent = a.label || 'OK';
       b.addEventListener('click', function(){
         if (a.type === 'close') { closeNotice(); return; }
-        if (a.type === 'map')   { var mb = document.getElementById('mapBtn'); if (mb) mb.click(); closeNotice(); return; }
-        if (a.type === 'sheet') { var sb = document.getElementById('sheetBtn'); if (sb) sb.click(); closeNotice(); return; }
         if (a.type === 'next')  { var nb = document.getElementById('nextBtn'); if (nb) nb.click(); closeNotice(); return; }
         if (a.href) { location.href = a.href; return; }
         closeNotice();
@@ -171,20 +120,19 @@
       actWrap.appendChild(b);
     });
 
-    // ボタン/自動オープン
     var nbtnEl = document.getElementById('noticeBtn');
     if (nbtnEl) nbtnEl.addEventListener('click', openNotice);
     if (autoOpen) openNotice();
   }
 
-  // --- 地図スライドイン ---
+  // ★★★ 地図・ワークシートパネルは維持（体験ページでは使わないが、他ページ用に残す） ★★★
   if (S.mapUrl) {
     var mapPanel = document.createElement('aside');
     mapPanel.className = 'panel';
     mapPanel.id = 'mapPanel';
     mapPanel.innerHTML =
       '<header><div>ハザードマップ</div><button id="mapClose" class="btn">×</button></header>' +
-      '<div class="body"><iframe src="' + S.mapUrl + '" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe></div>' +
+      '<div class="body"><iframe src="' + S.mapUrl + '" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe></div>';
     document.body.appendChild(mapPanel);
     var mapBtn = document.getElementById('mapBtn');
     if (mapBtn) mapBtn.addEventListener('click', function(){ mapPanel.classList.add('open'); });
@@ -192,7 +140,6 @@
     if (mapClose) mapClose.addEventListener('click', function(){ mapPanel.classList.remove('open'); });
   }
 
-  // --- ワークシート（Survey123）スライドイン ---
   if (S.surveyUrl) {
     var sheet = document.createElement('aside');
     sheet.className = 'panel';
@@ -212,32 +159,29 @@
     if (sheetClose) sheetClose.addEventListener('click', function(){ sheet.classList.remove('open'); });
   }
 
-  // --- 次へ（マーブリング・コラージュページで警告バナー付き） ---
+  // --- 次へボタン（マーブリング・コラージュページで保存確認バナー付き） ---
   document.addEventListener('click', function (ev) {
-    const nextBtn = ev.target.closest('#nextBtn');
-    if (!nextBtn) return; // 「次へ」以外は無視
+    var nextBtn = ev.target.closest('#nextBtn');
+    if (!nextBtn) return;
 
-    const currentPath = location.pathname || '';
-    const isMarblingPage = currentPath.includes('/marbling/');
-    const isCollagePage  = currentPath.includes('/collage/');
-    const showBanner = isMarblingPage || isCollagePage;
+    var currentPath = location.pathname || '';
+    var isMarblingPage = currentPath.includes('/marbling/');
+    var isCollagePage  = currentPath.includes('/collage/');
+    var showBanner = isMarblingPage || isCollagePage;
 
-    const S = window.WS_STEP || {};
-
-    // ▼ 該当ページ以外 → 通常遷移
+    // 該当ページ以外 → 通常遷移
     if (!showBanner) {
       if (S.next) location.href = S.next;
       return;
     }
 
-    // ▼ 該当ページのみ：バナーを出す
+    // 該当ページ：保存確認バナーを表示
     ev.preventDefault();
     ev.stopPropagation();
 
-    // すでに表示中なら何もしない（多重防止）
     if (document.getElementById('save-confirm-banner')) return;
 
-    const banner = document.createElement('div');
+    var banner = document.createElement('div');
     banner.id = 'save-confirm-banner';
     banner.style.cssText = `
       position: fixed;
@@ -258,144 +202,42 @@
 
     banner.innerHTML = `
       <span>⚠️ 作品を保存しましたか？</span>
-      <button id="confirmYes" style="padding:6px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;">はい</button>
-      <button id="confirmNo" style="padding:6px 12px;background:#fff;color:#111;border:1px solid #111;border-radius:6px;">いいえ</button>
+      <button id="confirmYes" style="padding:6px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;">はい</button>
+      <button id="confirmNo" style="padding:6px 12px;background:#fff;color:#111;border:1px solid #111;border-radius:6px;cursor:pointer;">いいえ</button>
     `;
 
     document.body.appendChild(banner);
 
-    // ▼ ボタン動作
-    document.getElementById('confirmYes').addEventListener('click', () => {
+    document.getElementById('confirmYes').addEventListener('click', function() {
       banner.remove();
-      if (S.next) location.href = S.next; // 次ページへ進む
+      if (S.next) location.href = S.next;
     });
 
-    document.getElementById('confirmNo').addEventListener('click', () => {
-      banner.remove(); // 閉じるだけ
+    document.getElementById('confirmNo').addEventListener('click', function() {
+      banner.remove();
     });
   });
 
-  // --- 戻る ---
+  // --- 戻るボタン ---
   var backBtn = document.getElementById('backBtn');
   if (backBtn) backBtn.addEventListener('click', function(){
-    if (S.prev) {                         // 明示された戻り先がある場合
+    if (S.prev) {
       location.href = S.prev;
       return;
     }
-    if (document.referrer) {              // 履歴がある場合は通常の戻る
+    if (document.referrer) {
       history.back();
       return;
     }
-    // フォールバック：1つ上の階層のトップへ
     var here = location.pathname.replace(/\/+$/,'');
     location.href = here.substring(0, here.lastIndexOf('/')) || '/';
   });
 
-  // --- 便利: ← / → キーで 戻る / 次へ ---
+  // --- キーボードショートカット ---
+  var nextBtn = document.getElementById('nextBtn');
   window.addEventListener('keydown', function(ev){
     if (ev.key === 'ArrowLeft' && backBtn) { backBtn.click(); }
     if (ev.key === 'ArrowRight' && nextBtn) { nextBtn.click(); }
   });
 
-  // --- 簡易タイマー ---
-  // --- 高機能タイマー（ページごとの設定に対応） ---
-  (function(){
-    var cfg = S.timer || {};
-    var totalMs  = Math.max(0, (cfg.minutes || 0) * 60 * 1000);
-    var modeDown = (cfg.mode || 'down') === 'down';
-    var autostart = !!cfg.autostart;
-
-    // 状態
-    var startAt = null;    // 計測開始の時刻（ms）
-    var paused  = !autostart;
-    var accMs   = 0;       // これまでの累積（pauseまでの経過）
-    var clockEl = document.getElementById('timerClock');
-    var barEl   = document.getElementById('timerbar');
-
-    // ヘルパ：mm:ss 表示
-    function fmt(ms){
-      ms = Math.max(0, Math.floor(ms/1000));
-      var m = Math.floor(ms / 60);
-      var s = ms % 60;
-      return (''+m).padStart(2, '0') + ':' + (''+s).padStart(2, '0');
-    }
-
-    // 描画
-    function render(now){
-      // 経過ms
-      var elapsed = accMs + (startAt ? (now - startAt) : 0);
-      if (modeDown) {
-        var remain = Math.max(0, totalMs - elapsed);
-        if (clockEl) clockEl.textContent = fmt(remain);
-        if (barEl && totalMs > 0) {
-          var p = Math.min(1, elapsed / totalMs);      // 0→1
-          barEl.style.width = (100 - p*100) + '%';     // 右→左に減る
-        }
-        // 0に到達したら止める（ビジュアル強調）
-        if (remain <= 0 && startAt){
-          paused = true;
-          accMs = totalMs;
-          startAt = null;
-          // 目立たせたい場合は点滅など（簡易にクラス付与でもOK）
-          if (barEl) barEl.style.background = '#f43f5e';
-        }
-      } else {
-        // up（経過時間）
-        if (clockEl) clockEl.textContent = fmt(elapsed);
-        if (barEl && totalMs > 0) {
-          var p2 = Math.min(1, elapsed / totalMs);
-          barEl.style.width = (100 - p2*100) + '%';
-        }
-      }
-    }
-
-    // ループ
-    function loop(){
-      render(Date.now());
-      requestAnimationFrame(loop);
-    }
-    requestAnimationFrame(loop);
-
-    // コントロール
-    function play(){
-      if (!startAt){ startAt = Date.now(); }
-      paused = false;
-    }
-    function pause(){
-      if (startAt){
-        accMs += Date.now() - startAt;
-        startAt = null;
-      }
-      paused = true;
-    }
-    function reset(){
-      accMs = 0;
-      startAt = autostart ? Date.now() : null;
-      paused = !autostart;
-      if (barEl && totalMs > 0) barEl.style.width = '100%';
-    }
-
-    // 初期状態
-    if (autostart) play(); else pause();
-    render(Date.now());
-
-    // ボタン（任意）
-    var bPlay  = document.getElementById('timerPlay');
-    var bPause = document.getElementById('timerPause');
-    var bReset = document.getElementById('timerReset');
-    if (bPlay)  bPlay.addEventListener('click', play);
-    if (bPause) bPause.addEventListener('click', pause);
-    if (bReset) bReset.addEventListener('click', reset);
-
-    // 画面非表示中は計測ずれを抑える（復帰時にaccumulate）
-    document.addEventListener('visibilitychange', function(){
-      if (document.hidden) {
-        if (!paused) pause();
-      } else {
-        if (!paused && autostart) play();
-      }
-    });
-  })();
-
-  requestAnimationFrame(tick);
 })();
