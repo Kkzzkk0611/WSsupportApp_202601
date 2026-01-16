@@ -9,7 +9,7 @@
 
 const CONFIG = {
     // Navigation URLs
-    backUrl: '/workshop/collage/Log/log_collage.html',
+    backUrl: '../../collage/Log/log_collage.html',
     nextUrl: '../lastconfirm/final_submit.html', // Placeholder for confirmation page
     
     // localStorage key
