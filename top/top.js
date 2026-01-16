@@ -279,7 +279,7 @@ withoutAccount?.addEventListener("click", () => {
 });
 proceedGuest?.addEventListener("click", () => {
   confirmPopup?.classList.remove("show");
-  window.location.href = "../workshop/intro/index.html";
+  window.location.href = "./workshop/intro/index.html";
 });
 closeChoicePopup?.addEventListener("click", () => {
   choicePopup?.classList.remove("show");
