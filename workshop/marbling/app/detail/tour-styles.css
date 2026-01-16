@@ -85,6 +85,14 @@
   justify-content: center;
   
   transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+   /* 追加 */
+  white-space: nowrap;      /* ←改行させない */
+  min-width: 44px;          /* ←32pxだと2文字が割れやすい */
+  padding: 0 10px;          /* ←横に余裕 */
+  width: auto;              /* ←固定幅をやめる（min-widthで担保） */
+
+  /* 念のため（縦書き指定がどこかにあっても強制） */
+  writing-mode: horizontal-tb;
 }
 
 .tour-popover__skip:hover {
