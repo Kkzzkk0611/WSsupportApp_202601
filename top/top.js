@@ -279,7 +279,7 @@ withoutAccount?.addEventListener("click", () => {
 });
 proceedGuest?.addEventListener("click", () => {
   confirmPopup?.classList.remove("show");
-  window.location.href = "../../workshop/intro/index.html";
+  window.location.href = "./workshop/intro/index.html";
 });
 closeChoicePopup?.addEventListener("click", () => {
   choicePopup?.classList.remove("show");
@@ -398,8 +398,8 @@ async function updateUserUI(user) {
     <a href="../gp/gp.html?school=${encodeURIComponent(
       school
     )}" class="header-btn">${school}ご近所さんアートチャット</a>
-    <a href="../map/index.html" class="header-btn">防災行動マップ</a>
-    <a href="../workshop/intro/index.html" class="header-btn highlight-btn">作品制作</a>
+    <a href="./map/index.html" class="header-btn">防災行動マップ</a>
+    <a href="./workshop/intro/index.html" class="header-btn highlight-btn">作品制作</a>
   `;
 
   // 🔹ログアウトボタンのバインド
@@ -450,7 +450,7 @@ onAuthStateChanged(auth, async (user) => {
     if (mapBtn) {
       mapBtn.addEventListener("click", () => {
         console.log("🟢 右上『防災行動マップ』クリック");
-        window.location.href = "../mapindex.html";
+        window.location.href = "./map/index.html";
       });
     }
   }
@@ -615,6 +615,6 @@ if (closeChatPopup) {
 // 「使ってみる」ボタン → ご近所アートページに遷移
 if (goChatBtn) {
   goChatBtn.addEventListener("click", () => {
-    window.location.href = "../gp/index.html";
+    window.location.href = "./gp/index.html";
   });
 }
