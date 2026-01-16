@@ -14,7 +14,7 @@ const CONFIG = {
     
     // Navigation URLs
     backUrl: '../app/index.html',
-    nextUrl: '/workshop/marbling/Mission/marbling_intro.html', // Placeholder for next page
+    nextUrl: '../../marbling/Mission/marbling_intro.html', // Placeholder for next page
     
     // localStorage key
     storageKey: 'hazardMapLog',
