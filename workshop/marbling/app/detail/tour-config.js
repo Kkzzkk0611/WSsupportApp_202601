@@ -84,7 +84,7 @@ export const GUIDE = {
           id: "save",
           type: "spotlight",
           target: "#ctrl-save",
-          content: { title: "保存しよう", body: "作品をPNGとして保存します。" },
+          content: { title: "保存しよう", body: "作品を画像ファイルとして保存します。" },
           advance: { mode: "event", name: "export:click" }
         },
         {
